@@ -1,6 +1,6 @@
-const HTML = __HTML__;
-
-// Serves the Subly site. The deploy step replaces __HTML__ with index.html as a JSON string.
+// Serves subly.dhananjaytech.app. The page and its images come straight from the
+// repository's main branch, so the site updates when site/index.html changes.
+const PAGE_URL = "https://raw.githubusercontent.com/DhananjayBhosale/Subly/main/site/index.html";
 const DMG_URL = "https://github.com/DhananjayBhosale/Subly/releases/latest/download/Subly.dmg";
 const IMAGE_BASE = "https://raw.githubusercontent.com/DhananjayBhosale/Subly/main/docs/images/";
 const IMAGE_NAME = /^[a-z0-9-]+\.(png|gif|jpg)$/;
@@ -17,6 +17,8 @@ const SECURITY_HEADERS = {
 
 const NOT_FOUND_HTML = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Not found · Subly</title><style>:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:grid;place-items:center;font:17px/1.5 -apple-system,BlinkMacSystemFont,Inter,sans-serif;text-align:center;padding:16px}a{color:#0a84ff}</style><main><h1>Page not found</h1><p><a href="/">Go to the Subly home page</a></p></main></html>`;
 
+const FALLBACK_HTML = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Subly</title><style>:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:grid;place-items:center;font:17px/1.5 -apple-system,BlinkMacSystemFont,Inter,sans-serif;text-align:center;padding:16px}a{color:#0a84ff}</style><main><h1>Subly</h1><p>Captions for your videos, made on your Mac.</p><p><a href="${DMG_URL}">Download for Mac</a> · <a href="https://github.com/DhananjayBhosale/Subly">Open source on GitHub</a></p></main></html>`;
+
 function respond(body, status, headers) {
   return new Response(body, { status, headers: { ...SECURITY_HEADERS, ...headers } });
 }
@@ -30,10 +32,14 @@ export default {
     const { pathname } = new URL(request.url);
 
     if (pathname === "/" || pathname === "/index.html") {
-      return respond(request.method === "HEAD" ? null : HTML, 200, {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, max-age=300",
-      });
+      const upstream = await fetch(PAGE_URL, { cf: { cacheTtl: 300, cacheEverything: true } });
+      if (upstream.ok) {
+        return respond(request.method === "HEAD" ? null : upstream.body, 200, {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "public, max-age=300",
+        });
+      }
+      return respond(FALLBACK_HTML, 503, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
     }
 
     if (pathname === "/download") {
