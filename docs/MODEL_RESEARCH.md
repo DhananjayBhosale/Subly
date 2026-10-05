@@ -13,7 +13,8 @@ A research log, last updated 2026-10-05. Later sections update earlier ones.
 Runtime: whisper.cpp v1.9.4 (see `Scripts/build_engine.sh`) built with `-DBUILD_SHARED_LIBS=OFF
 -DGGML_BACKEND_DL=OFF -DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON`, so the binary is
 self-contained with Metal embedded. No Python, no Homebrew, nothing for the user to
-install. 3.0 MB, bundled at `Resources/engine/whisper-cli`.
+install. About 4.4 MB, built into `Resources/engine/whisper-cli` and shipped inside the
+app at `Contents/Helpers/whisper-cli`.
 
 ## Why Apex is interesting
 

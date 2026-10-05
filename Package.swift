@@ -13,7 +13,7 @@ let package = Package(
     ],
     targets: [
         // Deterministic core. NO Apple-framework imports beyond Foundation —
-        // keeps caption logic unit-testable and portable (PRD §5.1).
+        // keeps caption logic unit-testable and portable.
         .target(name: "SublyCaptions"),
         .target(name: "SublyEngine", dependencies: ["SublyCaptions"]),
         // Swift 5 language mode on purpose: Apple's `translationTask` hands over a

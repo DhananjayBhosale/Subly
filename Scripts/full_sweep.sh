@@ -8,8 +8,10 @@ say_() { echo "$1" | tee -a "$OUT/report.txt"; }
 say_ "SUBLY FULL SWEEP — $(date '+%Y-%m-%d %H:%M')"
 say_ "=========================================="
 say_ ""
+FAILED=0
 say_ "--- unit tests ---"
-swift test 2>&1 | tail -1 | tee -a "$OUT/report.txt"
+if swift test > "$OUT/tests.log" 2>&1; then tail -1 "$OUT/tests.log" | tee -a "$OUT/report.txt"
+else say_ "    unit tests FAILED (see $OUT/tests.log)"; FAILED=$((FAILED + 1)); fi
 say_ ""
 say_ "--- capability registry ---"
 ./.build/debug/subly-cli caps 2>&1 | head -4 | tee -a "$OUT/report.txt"
@@ -30,14 +32,14 @@ run() {
     grep -A3 "^=== FAILURES" "$OUT/$lang.log" | grep -E "^  " | sed 's/^/    /' | tee -a "$OUT/report.txt"
     say_ "    RESULT: OK"
   else
-    say_ "    RESULT: FAILED"
+    say_ "    RESULT: FAILED"; FAILED=$((FAILED + 1))
     tail -2 "$OUT/$lang.log" | sed 's/^/    /' | tee -a "$OUT/report.txt"
   fi
   say_ ""
 }
 
 say_ "=== APPLE ENGINES ==="
-./.build/debug/subly-cli ext off hi >/dev/null 2>&1
+./.build/debug/subly-cli engine apple hi >/dev/null
 run fixtures/en.wav       en-US original            "English (SpeechTranscriber)"
 run fixtures/hi.wav       hi-IN original,romanized  "Hindi flagship (DictationTranscriber)"
 run fixtures/ja2.wav      ja-JP original,romanized  "Japanese CJK"
@@ -50,11 +52,15 @@ run fixtures/en_hevc10.mp4 en-US original           "HEVC 10-bit video"
 run fixtures/hi_video.mp4 hi-IN original,romanized  "Hindi vertical 1080x1920 video"
 
 say_ "=== EXTENDED ENGINE (downloaded models) ==="
-./.build/debug/subly-cli ext on hi >/dev/null 2>&1
-run fixtures/hi.wav       hi-IN romanized           "Hindi via Apex (writes Hinglish from audio)"
-./.build/debug/subly-cli ext off hi >/dev/null 2>&1
+if ./.build/debug/subly-cli engine hindi2hinglish-apex-q5 hi | grep -q "pack hindi2hinglish-apex-q5: installed=true"; then
+  run fixtures/hi.wav     hi-IN romanized           "Hindi via Apex (writes Hinglish from audio)"
+else
+  say_ "    skipped: download Apex in the app's Speech Models first"
+fi
+./.build/debug/subly-cli engine auto hi >/dev/null
 
 say_ "=== pool after sweep ==="
 ./.build/debug/subly-cli pool 2>&1 | tee -a "$OUT/report.txt"
 say_ ""
+if [ "$FAILED" -gt 0 ]; then say_ "SWEEP FINISHED WITH $FAILED FAILURE(S)"; exit 1; fi
 say_ "SWEEP COMPLETE"

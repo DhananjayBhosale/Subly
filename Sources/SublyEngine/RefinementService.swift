@@ -4,9 +4,9 @@ import SublyCaptions
 
 /// On-device text refinement via the Apple Foundation Model.
 ///
-/// Two hard rules, both from the PRD: it edits TEXT ONLY and can never touch a
-/// timestamp (APPLE-04), and it may only improve output the deterministic pipeline
-/// already produced — never originate it (§11 step 4). A rejected suggestion falls
+/// Two hard rules: it edits TEXT ONLY and can never touch a timestamp, and it may
+/// only improve output the deterministic pipeline already produced — never
+/// originate it. A rejected suggestion falls
 /// back to the deterministic text.
 public actor RefinementService {
 
@@ -35,7 +35,7 @@ public actor RefinementService {
     public var isAvailable: Bool { SystemLanguageModel.default.isAvailable }
 
     /// The on-device model has a finite context window, so transcripts are chunked and
-    /// merged only when the result validates. PRD APPLE-05.
+    /// merged only when the result validates.
     private static let linesPerChunk = 12
 
     /// Improve punctuation and obvious spelling in already-generated caption text.
@@ -203,7 +203,7 @@ public actor RefinementService {
     }
 
     /// Romanization rerank: the deterministic result is the baseline and the model may
-    /// only adjust spelling. PRD §11 step 4.
+    /// only adjust spelling.
     public func rerankRomanization(slotTexts: [Int: String],
                                    language: String,
                                    protectedTerms: [String]) async -> [Int: String] {

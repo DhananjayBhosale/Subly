@@ -122,7 +122,7 @@ public struct SubtitleWriter: Sendable {
         }
     }
 
-    /// Validate before writing, so a bad file never reaches disk. PRD §10.9.
+    /// Validate before writing, so a bad file never reaches disk.
     public func validate(_ track: SubtitleTrack) throws {
         let cues = track.cues.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         guard !cues.isEmpty else { throw ValidationError.emptyTrack }
@@ -139,7 +139,7 @@ public struct SubtitleWriter: Sendable {
     // MARK: - Filenames
 
     /// `clip.en.srt`, `clip.hi-Latn.srt`, `clip.hi.srt` — BCP-47 with script subtag so
-    /// editors and YouTube pick the language up correctly. PRD §10.9.
+    /// editors and YouTube pick the language up correctly.
     public func filename(base: String, track: SubtitleTrack, format: SubtitleFormat) -> String {
         let stem = base.replacingOccurrences(of: "/", with: "-")
         return "\(stem).\(track.fileSuffix).\(format.fileExtension)"
@@ -149,7 +149,7 @@ public struct SubtitleWriter: Sendable {
 // MARK: - Import
 
 /// Reads an existing subtitle file so it can be shown as a read-only reference
-/// track next to the generated ones. PRD MED-06.
+/// track next to the generated ones.
 public struct SubtitleImporter: Sendable {
     public init() {}
 

@@ -1,7 +1,7 @@
 import Foundation
 
 /// On-disk project format. Schema-versioned so older projects migrate forward
-/// rather than failing to open. PRD PROJ-01/02/03.
+/// rather than failing to open.
 public struct ProjectDocument: Codable, Sendable, Identifiable, Hashable {
 
     /// Bump when the shape changes, and add a migration in `migrate(_:)`.
@@ -13,9 +13,9 @@ public struct ProjectDocument: Codable, Sendable, Identifiable, Hashable {
     public var createdAt: Date
     public var modifiedAt: Date
 
-    // Source media is REFERENCED, never copied. PRD PROJ-02.
+    // Source media is REFERENCED, never copied.
     public var mediaPath: String
-    /// Cheap identity check so a moved or replaced file is noticed. PRD PROJ-05.
+    /// Cheap identity check so a moved or replaced file is noticed.
     public var mediaFingerprint: String
     /// Security-scoped bookmark, so access survives relaunch without re-prompting.
     public var mediaBookmark: Data?
@@ -163,7 +163,7 @@ public struct ProjectStore: Sendable {
     }
 
     /// Size, modification date and name — enough to notice a moved or edited file
-    /// without hashing gigabytes. PRD PROJ-05.
+    /// without hashing gigabytes.
     public static func fingerprint(path: String) -> String {
         let attrs = try? FileManager.default.attributesOfItem(atPath: path)
         let size = (attrs?[.size] as? Int64) ?? 0

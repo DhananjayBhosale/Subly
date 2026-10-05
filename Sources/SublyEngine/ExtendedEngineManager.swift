@@ -7,7 +7,7 @@ import SublyCaptions
 /// and for Hindi/Hinglish where a specialised model beats the generic path.
 ///
 /// Never bundled, never auto-downloaded, and never required for an Apple-covered
-/// language. PRD §10.5 (EXT-01…EXT-09).
+/// language.5 (EXT-01…EXT-09).
 public final class ExtendedEngineManager: @unchecked Sendable {
 
     public static let shared = ExtendedEngineManager()
@@ -199,7 +199,7 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         return (generalPack, "Handles about 99 languages and is the best general choice.")
     }
 
-    /// Languages the Apple stack cannot transcribe on any Mac. PRD §6.5.
+    /// Languages the Apple stack cannot transcribe on any Mac.
     public static let additionalLanguages: Set<String> = [
         "mr", "as",                                                       // South Asia
         "bn", "gu", "pa", "ta", "te", "kn", "ml", "ur", "ne", "si",
@@ -341,7 +341,7 @@ public final class ExtendedEngineManager: @unchecked Sendable {
     }
 
     /// Delete a pack. Existing tracks stay readable and editable; only regeneration
-    /// needs a reinstall. PRD EXT-04.
+    /// needs a reinstall.
     public func delete(_ pack: ModelPack) throws {
         let url = modelURL(pack)
         if FileManager.default.fileExists(atPath: url.path) {
@@ -361,7 +361,7 @@ public final class ExtendedEngineManager: @unchecked Sendable {
 
     // MARK: - Download
 
-    /// Resumable, checksum-verified, cancellable. PRD EXT-03.
+    /// Resumable, checksum-verified, cancellable.
     public func install(_ pack: ModelPack,
                         progress: (@Sendable (Double) -> Void)? = nil) async throws {
         if isInstalled(pack) { return }

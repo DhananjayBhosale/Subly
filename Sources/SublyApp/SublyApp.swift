@@ -63,8 +63,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Task { await Self.headlessGenerate(spec: spec) }
             }
         }
-        // Headless editor check: proves the editing invariants the PRD requires
-        // (MULTI-05 text isolation, MULTI-06 shared timing, undo, reflow, export).
+        // Headless editor check: proves the editing invariants — text edits stay in
+        // their track, every track keeps the shared timing, undo, reflow and export.
         if let spec = ProcessInfo.processInfo.environment["SUBLY_EDIT_CHECK"] {
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
                 Task { await Self.editorCheck(spec: spec) }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Per-script caption behaviour. Word limits are meaningless for languages written
-/// without spaces, and scripts differ sharply in how much text fits a line. PRD CAP-10.
+/// without spaces, and scripts differ sharply in how much text fits a line.
 public struct ScriptProfile: Sendable, Hashable {
     public enum Segmentation: String, Sendable, Hashable {
         /// Space-delimited: count words.

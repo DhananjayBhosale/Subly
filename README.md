@@ -37,7 +37,7 @@ Then burn them into the video, Reels-style:
 <table>
 <tr>
 <td width="33%" align="center"><b>1 · Add Video</b><br><sub>Drop a file. Your projects wait for you here.</sub><br><br><img src="docs/images/home.png" alt="Home: drop a video, and a grid of projects with thumbnails"></td>
-<td width="33%" align="center"><b>2 · Choose</b><br><sub>Subly hears the language. Tick the captions you want.</sub><br><br><img src="docs/images/choose.png" alt="Choose: caption cards for Hinglish, Hindi and an English translation"></td>
+<td width="33%" align="center"><b>2 · Choose</b><br><sub>Check the language (Subly detects it when the Whisper model is installed) and tick the captions you want.</sub><br><br><img src="docs/images/choose.png" alt="Choose: caption cards for Hinglish, Hindi and an English translation"></td>
 <td width="33%" align="center"><b>3 · Edit & Share</b><br><sub>Fix a word, pick a look, save the video or an SRT.</sub><br><br><img src="docs/images/editor-light.png" alt="Editor: a sunset vlog with captions and the Captions panel"></td>
 </tr>
 </table>

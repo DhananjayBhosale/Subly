@@ -2,7 +2,7 @@ import SwiftUI
 import SublyCaptions
 import SublyEngine
 
-/// One file per ticked track, BCP-47 named. PRD §10.9.
+/// One file per ticked track, BCP-47 named.
 struct ExportSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss

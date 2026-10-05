@@ -3,7 +3,7 @@ import Translation
 import SublyCaptions
 
 /// On-device translation. English is the guaranteed target; other pairs appear only
-/// where this Mac reports them available. PRD §6.3.
+/// where this Mac reports them available.
 public actor TranslationService {
 
     public enum TranslationServiceError: LocalizedError {
@@ -33,7 +33,7 @@ public actor TranslationService {
 
     /// Translate one string per cue slot, preserving the slot → text mapping via
     /// `clientIdentifier`, so translated text lands back in the correct time window
-    /// and the spine is never re-timed. PRD CAP-08.
+    /// and the spine is never re-timed.
     public func translate(slotTexts: [Int: String],
                           from source: String,
                           to target: String,

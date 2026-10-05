@@ -1,12 +1,10 @@
 # WHAT CI CAN AND CANNOT DO FOR THIS PROJECT
 #
-# Subly cannot be compiled on a GitHub runner. Package.swift declares
-# `platforms: [.macOS("26.0")]`, so SwiftPM refuses to load the manifest on
-# anything older — the job would fail before building a single file. Even on a
-# macOS 26 runner it would not get far: SublyEngine, SublyTranslate and SublyApp
-# import Speech, Translation and FoundationModels, and the speech and
-# translation models those need are downloaded by macOS on demand and are not
-# present on a CI machine.
+# Subly is not compiled here. SublyEngine, SublyTranslate and SublyApp use Speech,
+# Translation and FoundationModels APIs that exist only in the macOS 26 SDK, which a
+# hosted runner may not have. Even where it builds, the speech and translation
+# assets the tests and harnesses need are downloaded by macOS at run time on an
+# Apple Silicon Mac, so they are not present on a CI machine.
 #
 # Shipping a workflow that always fails is worse than shipping none, so this one
 # does not pretend to build. It checks the things that can be checked anywhere,

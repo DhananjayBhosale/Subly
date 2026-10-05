@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" href="images/icon.png">
 <link rel="apple-touch-icon" href="images/icon.png">
 <meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0b0b10" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Subly">
@@ -24,204 +24,272 @@
 <meta name="twitter:title" content="Subly · Captions that keep up with you">
 <meta name="twitter:description" content="On-device captions for Mac. Free and open source.">
 <meta name="twitter:image" content="https://subly.dhananjaytech.app/images/editor-dark.png">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link rel="stylesheet" href="https://fonts.bunny.net/css?family=geist:400,500,600,700,800|instrument-serif:400,400i&display=swap">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Subly","operatingSystem":"macOS 26 or later","applicationCategory":"MultimediaApplication","softwareVersion":"1.1","downloadUrl":"https://github.com/DhananjayBhosale/Subly/releases/latest/download/Subly.dmg","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Dhananjay Bhosale","url":"https://github.com/DhananjayBhosale"}}</script>
+<script>try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&"IntersectionObserver"in window)document.documentElement.classList.add("rv-on")}catch(e){}</script>
 <style>
 :root{
-  --bg:#fbfbfd;--bg2:#f2f2f6;--card:#fff;--text:#1d1d1f;--muted:#55555b;--line:rgba(0,0,0,.09);
-  --ink:#0066cc;--blue:#0a84ff;--blue2:#0071e3;
-  --p:#5828dc;--k:#e63ca0;--o:#ff963c;
+  --font:"Geist",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Kohinoor Devanagari","Noto Sans Devanagari",sans-serif;
+  --serif:"Instrument Serif","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --bg:#fbfbfd;--bg2:#f4f4f7;--card:#fff;--text:#18181b;--muted:#52525b;
+  --line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.14);
+  --ink:#0060c7;--blue:#0071e3;
+  --p:#5828dc;--k:#c42a85;--o:#ff963c;
   --t1:#5828dc;--t2:#c42a85;--t3:#c75a12;
-  --brand:linear-gradient(120deg,var(--p),var(--k) 55%,var(--o));
+  --brand:linear-gradient(120deg,#5828dc,#e63ca0 55%,#ff963c);
   --brand-ink:linear-gradient(120deg,#5828dc,#c42a85);
-  --shadow:0 1px 2px rgba(0,0,0,.05),0 12px 40px -12px rgba(40,20,90,.18);
-  --r:22px;
+  --dim:color-mix(in oklab,var(--text) 15%,var(--bg));
+  --shadow:0 1px 2px rgba(16,16,32,.04),0 8px 28px -14px rgba(40,20,90,.18);
+  --shadow-lg:0 2px 4px rgba(16,16,32,.04),0 22px 48px -20px rgba(40,20,90,.3);
+  --r1:10px;--r2:14px;--r3:20px;--r4:28px;
+  --ease:cubic-bezier(.2,.7,.2,1);
   color-scheme:light dark;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#0b0b10;--bg2:#131319;--card:#1b1b22;--text:#f5f5f7;--muted:#a8a8b3;--line:rgba(255,255,255,.12);
-  --ink:#5aa9ff;--blue2:#0071e3;
-  --t1:#a98bff;--t2:#ff6ec7;--t3:#ffab5e;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px -16px rgba(0,0,0,.7);
+  --bg:#0a0a0f;--bg2:#111117;--card:#17171e;--text:#f4f4f6;--muted:#a1a1ab;
+  --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.16);
+  --ink:#6cb2ff;
+  --t1:#ae92ff;--t2:#ff70c9;--t3:#ffad62;
+  --dim:color-mix(in oklab,var(--text) 19%,var(--bg));
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 12px 36px -18px rgba(0,0,0,.8);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.5),0 26px 56px -22px rgba(0,0,0,.9);
 }}
 *,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:64px;-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--text);font:17px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro",Inter,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html{scroll-behavior:smooth;scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.6 var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden;font-feature-settings:"ss01","cv11"}
 img{max-width:100%;height:auto;display:block}
-a{color:var(--ink)}
-a:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:10px}
+a{color:var(--ink);text-underline-offset:.18em}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:8px}
 h1,h2{text-wrap:balance}
-h1,h2,h3{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro",Inter,sans-serif;line-height:1.08;letter-spacing:-.025em;margin:0}
-h2{font-size:clamp(30px,5vw,48px);font-weight:750}
-h3{font-size:19px;letter-spacing:-.01em;line-height:1.25}
+h1,h2,h3{line-height:1.08;letter-spacing:-.025em;margin:0;font-weight:600}
+h2{font-size:clamp(32px,4.6vw,52px);letter-spacing:-.035em}
+h3{font-size:18px;letter-spacing:-.015em;line-height:1.3}
 p{margin:0}
-.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
-.grad{background:linear-gradient(100deg,var(--t1),var(--t2) 55%,var(--t3));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lead{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:640px}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.acc{font-family:var(--serif);font-style:italic;font-weight:400;font-size:1.08em;letter-spacing:-.01em;background:linear-gradient(100deg,var(--t1),var(--t2) 55%,var(--t3));-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 .1em .06em 0;margin-right:-.1em}
+.lead{font-size:clamp(17px,2vw,19px);color:var(--muted);max-width:620px;line-height:1.6}
 .center{text-align:center}.center .lead{margin-left:auto;margin-right:auto}
-section{padding:96px 0}
-.alt{background:var(--bg2)}
-.kicker{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
-.skip{position:absolute;left:-999px;top:8px;background:var(--card);padding:8px 14px;border-radius:10px;z-index:99}
+.head-gap{margin-top:16px}
+section{padding:112px 0}
+.alt{background:var(--bg2);border-block:1px solid var(--line)}
+.kicker{display:inline-block;font-size:12.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t1);margin-bottom:16px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--card);padding:8px 14px;border-radius:var(--r1);z-index:99}
 .skip:focus{left:8px}
 
 /* nav */
-.nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid var(--line)}
-.nav .wrap{display:flex;align-items:center;gap:12px;height:56px}
-.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;color:var(--text);text-decoration:none;letter-spacing:-.01em;margin-right:auto}
-.brand img{width:30px;height:30px;border-radius:8px}
-.links{display:flex;gap:4px}
-.links a{color:var(--text);text-decoration:none;font-size:14.5px;padding:6px 10px;border-radius:8px;opacity:.85}
-.links a:hover{opacity:1;background:var(--line)}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;white-space:nowrap}
-.pill.gh{color:var(--text);border:1px solid var(--line);background:var(--card)}
-.pill.dl{color:#fff;background:var(--blue2)}
+.nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 72%,transparent);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:10px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;color:var(--text);text-decoration:none;letter-spacing:-.02em;margin-right:auto}
+.brand img{width:28px;height:28px;border-radius:7px}
+.links{display:flex;gap:2px;margin-right:8px}
+.links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;padding:6px 12px;border-radius:8px;transition:color .2s,background-color .2s}
+.links a:hover{color:var(--text);background:var(--line)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:500;padding:7px 14px;border-radius:999px;text-decoration:none;white-space:nowrap;transition:transform .2s,background-color .2s,border-color .2s}
+.pill:hover{transform:translateY(-1px)}
+.pill.gh{color:var(--text);border:1px solid var(--line2);background:var(--card)}
+.pill.dl{color:#fff;background:var(--blue)}
 .pill svg{width:16px;height:16px;fill:currentColor}
 
 /* buttons */
 .cta{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:flex-start}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border-radius:999px;font-size:19px;font-weight:700;text-decoration:none;transition:transform .2s,box-shadow .2s}
-.btn svg{width:20px;height:20px;fill:currentColor;flex:none}
-.btn-main{color:#fff;background:linear-gradient(180deg,var(--blue),var(--blue2));box-shadow:0 10px 30px -8px rgba(10,132,255,.6),inset 0 1px 0 rgba(255,255,255,.25)}
-.btn-alt{color:var(--text);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 26px;border-radius:999px;font-size:17px;font-weight:600;letter-spacing:-.01em;text-decoration:none;transition:transform .25s var(--ease),box-shadow .25s,border-color .25s}
+.btn svg{width:19px;height:19px;fill:currentColor;flex:none}
+.btn-main{color:#fff;background:var(--blue);box-shadow:0 8px 24px -10px rgba(0,113,227,.7),inset 0 1px 0 rgba(255,255,255,.2)}
+.btn-alt{color:var(--text);background:var(--card);border:1px solid var(--line2);box-shadow:var(--shadow)}
 .btn:hover{transform:translateY(-2px)}
-.btn-main:hover{box-shadow:0 16px 36px -8px rgba(10,132,255,.7)}
-.under{font-size:14px;color:var(--muted);margin-top:10px;text-align:center}
+.btn-main:hover{box-shadow:0 14px 30px -10px rgba(0,113,227,.8),inset 0 1px 0 rgba(255,255,255,.2)}
+.btn-alt:hover{box-shadow:var(--shadow-lg)}
+.under{font-size:13.5px;color:var(--muted);margin-top:10px;text-align:center}
 .dlgroup{display:flex;flex-direction:column;align-items:center}
 
 /* hero */
-.hero{padding:72px 0 40px;text-align:center;position:relative;overflow:hidden}
-.badge{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:6px 14px 6px 6px;border-radius:999px;background:var(--card);border:1px solid var(--line);margin-bottom:26px;color:var(--text);text-decoration:none}
-.badge b{flex:none;white-space:nowrap;background:var(--brand-ink);color:#fff;font-size:12px;padding:3px 9px;border-radius:999px;letter-spacing:.02em}
-.hero h1{font-size:clamp(42px,8.4vw,92px);font-weight:800;letter-spacing:-.04em;max-width:14ch;margin:0 auto 22px}
-.hero .lead{margin:0 auto 34px}
-.meta{font-size:13.5px;color:var(--muted);margin-top:18px}
+.hero{padding:80px 0 48px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-30% 0 auto;height:620px;background:radial-gradient(50% 50% at 50% 50%,color-mix(in oklab,var(--t1) 14%,transparent),transparent 70%);pointer-events:none;z-index:-1}
+.badge{display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:500;padding:5px 14px 5px 5px;border-radius:999px;background:var(--card);border:1px solid var(--line2);margin-bottom:28px;color:var(--text);text-decoration:none;box-shadow:var(--shadow);transition:transform .25s var(--ease)}
+.badge:hover{transform:translateY(-1px)}
+.badge b{flex:none;white-space:nowrap;background:var(--brand-ink);color:#fff;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
+.headline{font-size:clamp(44px,7vw,84px);font-weight:700;letter-spacing:-.04em;line-height:1.02;margin:0 auto 26px}
+.headline .h1a{display:block}
+.rot{display:grid;justify-items:center;font-family:var(--serif);font-style:italic;font-weight:400;font-size:min(1.1em,calc((100vw - 32px) / 8.1));letter-spacing:-.012em;line-height:1.08}
+.ph{grid-area:1/1;align-self:center;visibility:hidden;text-wrap:balance;max-width:100%;background:linear-gradient(100deg,var(--t1),var(--t2) 55%,var(--t3));-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 .12em .08em}
+.ph.on{visibility:visible}
+.rot.live .ph{visibility:visible;background:none;padding:0}
+.rot.live .w{display:inline-block;padding:0 .08em .08em;margin:0 -.04em;background-image:linear-gradient(100deg,var(--c1),var(--c2)),linear-gradient(var(--dim),var(--dim));background-size:0% 100%,100% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;color:transparent;opacity:0}
+.rot.live .on .w{animation:wIn .7s var(--ease) both,wFill .32s linear both;animation-delay:calc(var(--i) * 80ms),calc(450ms + var(--i) * 300ms)}
+.rot.live .out .w{opacity:1;background-size:100% 100%,100% 100%;animation:wOut .45s cubic-bezier(.5,0,.9,.4) both;animation-delay:calc(var(--i) * 40ms)}
+@keyframes wIn{from{opacity:0;transform:translateY(.3em);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes wFill{from{background-size:0% 100%,100% 100%}to{background-size:100% 100%,100% 100%}}
+@keyframes wOut{from{opacity:1;transform:none;filter:blur(0)}to{opacity:0;transform:translateY(-.25em);filter:blur(6px)}}
+.hero .lead{margin:0 auto 36px}
+.meta{font-size:13.5px;color:var(--muted);margin-top:20px}
 .meta a{color:var(--muted)}
-.stage{position:relative;margin:64px auto 0;max-width:1040px;perspective:1800px}
-.stage::before{content:"";position:absolute;inset:8% 6% -4%;background:var(--brand);filter:blur(70px);opacity:.45;border-radius:40%;z-index:-1}
-.shot{margin:0;border-radius:18px;overflow:hidden;box-shadow:0 40px 80px -30px rgba(30,10,70,.55),0 0 0 1px rgba(255,255,255,.08);transform:rotateX(9deg) scale(.98);transform-origin:50% 100%;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.stage{position:relative;margin:72px auto 0;max-width:1040px;perspective:1800px}
+.stage::before{content:"";position:absolute;inset:10% 8% -2%;background:var(--brand);filter:blur(72px);opacity:.4;border-radius:40%;z-index:-1;animation:glow 16s ease-in-out infinite alternate;will-change:transform}
+@keyframes glow{from{transform:translate3d(-4%,2%,0) scale(1) rotate(-2deg)}to{transform:translate3d(4%,-2%,0) scale(1.07) rotate(2deg)}}
+.shot{margin:0;border-radius:18px;overflow:hidden;box-shadow:0 40px 80px -32px rgba(30,10,70,.55),0 0 0 1px var(--line2);transform:rotateX(7deg) scale(.985);transform-origin:50% 100%;transition:transform .9s var(--ease)}
 .stage:hover .shot{transform:none}
 
-/* tracks */
-.tracks{margin:56px auto 0;max-width:860px;display:grid;gap:14px}
-.row{display:grid;grid-template-columns:170px 1fr;gap:16px;align-items:center}
-.row .lab{font-size:14px;font-weight:600;color:var(--muted);text-align:right;line-height:1.3}
-.row .lab small{display:block;font-weight:500;font-size:12.5px;opacity:.9}
-.bar{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:var(--shadow)}
-.seg{height:52px;border-radius:11px;flex:1;background:repeating-linear-gradient(135deg,var(--line) 0 6px,transparent 6px 12px)}
-.seg:first-child{flex:2.3;display:flex;align-items:center;padding:0 14px;font-size:21px;font-weight:750;letter-spacing:-.01em;white-space:nowrap;overflow:hidden}
-.seg:nth-child(2){flex:1.15}.seg:nth-child(3){flex:1.5}
-.r1 .seg:first-child{background:var(--p);color:#fff;transform:rotate(-1.2deg)}
-.r2 .seg:first-child{background:#c42a85;color:#fff;transform:rotate(.8deg)}
-.r3 .seg:first-child{background:var(--o);color:#1d1d1f;transform:rotate(-.6deg)}
-.ruler{display:grid;grid-template-columns:170px 1fr;gap:16px;font:12.5px/1 ui-monospace,"SF Mono",Menlo,monospace;color:var(--muted)}
-.ruler div{display:flex;padding:0 7px}
-.ruler span:first-child{flex:2.3}.ruler span:nth-child(2){flex:1.15}.ruler span:nth-child(3){flex:1.5}
-.note{margin-top:28px;font-size:15px;color:var(--muted)}
+/* tracks demo */
+.tl{--L:6.5s;margin:60px auto 0;max-width:920px;display:grid;gap:12px;text-align:left}
+.ruler,.row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;align-items:center}
+.ticks,.lane{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2.4fr) minmax(0,2.3fr);gap:4px}
+.ticks{padding:0 5px;font:500 12px/1 var(--mono);color:var(--muted)}
+.ticks span{border-left:1px solid var(--line2);padding:2px 0 2px 7px}
+.lab{font-size:14px;font-weight:600;color:var(--text);text-align:right;line-height:1.3}
+.lab small{display:block;font-weight:400;font-size:12.5px;color:var(--muted)}
+.lane{position:relative;overflow-x:clip;padding:5px;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);box-shadow:var(--shadow)}
+.r1{--tc:#5828dc;--on:#fff}.r2{--tc:#c42a85;--on:#fff}.r3{--tc:#ff963c;--on:#18181b}
+.chip{display:grid;align-items:center;height:60px;padding:8px 12px;border-radius:var(--r1);overflow:hidden;font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.01em;color:var(--muted);background-color:color-mix(in oklab,var(--tc) 8%,var(--card));border:1px solid color-mix(in oklab,var(--tc) 22%,transparent);animation:var(--L) linear infinite}
+.c1{animation-name:k1}.c2{animation-name:k2}.c3{animation-name:k3}
+.head{position:absolute;left:5px;right:5px;top:-7px;bottom:-7px;pointer-events:none;z-index:2;animation:sweep var(--L) linear infinite}
+.head::before{content:"";position:absolute;left:-1px;top:0;bottom:0;width:2px;border-radius:2px;background:var(--text);box-shadow:0 0 0 1px color-mix(in srgb,var(--bg) 60%,transparent)}
+.r1 .head::after{content:"";position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--text);box-shadow:0 0 0 2px var(--bg2)}
+.tl.paused .chip,.tl.paused .head{animation-play-state:paused}
+@keyframes sweep{0%{transform:translateX(0);opacity:1}90.77%{transform:translateX(100%);opacity:1}95%{transform:translateX(100%);opacity:0}99%{transform:translateX(0);opacity:0}100%{transform:translateX(0);opacity:1}}
+@keyframes k1{0%,18%,100%{background-color:var(--tc);color:var(--on);border-color:transparent}19.6%,98.4%{background-color:color-mix(in oklab,var(--tc) 8%,var(--card));color:var(--muted);border-color:color-mix(in oklab,var(--tc) 22%,transparent)}}
+@keyframes k2{0%,18%,57%,100%{background-color:color-mix(in oklab,var(--tc) 8%,var(--card));color:var(--muted);border-color:color-mix(in oklab,var(--tc) 22%,transparent)}19.6%,55.4%{background-color:var(--tc);color:var(--on);border-color:transparent}}
+@keyframes k3{0%,55.4%,94%,100%{background-color:color-mix(in oklab,var(--tc) 8%,var(--card));color:var(--muted);border-color:color-mix(in oklab,var(--tc) 22%,transparent)}57%,91%{background-color:var(--tc);color:var(--on);border-color:transparent}}
+.note{margin-top:32px;font-size:15px;color:var(--muted)}
 
 /* looks */
-.split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
-.gifcard{margin:0;background:linear-gradient(140deg,#2a1466,#7a1f63 55%,#a64a1f);padding:18px;border-radius:28px;box-shadow:var(--shadow)}
-.gifcard img{border-radius:16px;width:100%}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.gifcard{margin:0;background:linear-gradient(140deg,#2a1466,#7a1f63 55%,#a64a1f);padding:18px;border-radius:var(--r4);box-shadow:var(--shadow-lg)}
+.gifcard img{border-radius:var(--r2);width:100%}
 .gifcard figcaption{color:#fff;font-size:14px;text-align:center;margin-top:12px;opacity:.92}
 .looks{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;padding:0;list-style:none}
-.looks li{font-size:16px;padding:9px 16px;border-radius:12px;background:#1d1d22;color:#fff;border:1px solid var(--line)}
+.looks li{font-size:16px;padding:9px 16px;border-radius:var(--r1);background:#1d1d22;color:#fff;border:1px solid var(--line)}
 .l-clean{font-weight:600}
-.l-pop{font-weight:900;text-transform:uppercase;letter-spacing:.02em;text-shadow:0 2px 0 #000}
-.l-kar{font-weight:800}.l-kar span{color:#ffd60a}
-.l-box{font-weight:700;background:#000!important;outline:2px solid #fff;outline-offset:-5px}
-.l-min{font-weight:400;opacity:1;letter-spacing:.01em}
-.l-type{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:15px!important}
+.l-pop{font-weight:800;text-transform:uppercase;letter-spacing:.02em;text-shadow:0 2px 0 #000}
+.l-kar{font-weight:700}.l-kar span{color:#ffd60a}
+.l-box{font-weight:600;background:#000!important;outline:2px solid #fff;outline-offset:-5px}
+.l-min{font-weight:400;letter-spacing:.01em}
+.l-type{font-family:var(--mono);font-size:15px!important}
 .l-type::after{content:"▍";color:#ff963c;margin-left:2px}
-.small{font-size:15px;color:var(--muted);margin-top:18px}
+.small{font-size:15px;color:var(--muted);margin-top:24px}
 
 /* steps */
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px;padding:0;list-style:none}
-.step{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:60px;padding:0;list-style:none}
+.step{background:var(--card);border:1px solid var(--line);border-radius:var(--r3);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
 .step .txt{padding:24px 24px 26px}
-.num{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--brand-ink);color:#fff;font-weight:800;font-size:15px;margin-bottom:12px}
+.num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--brand-ink);color:#fff;font-weight:600;font-size:14px;margin-bottom:14px}
 .step p{color:var(--muted);font-size:15.5px;margin-top:6px}
-.step img{border-bottom:1px solid var(--line);margin-top:auto;order:2;border-top:1px solid var(--line);border-bottom:0}
+.step img{order:2;margin-top:auto;border-top:1px solid var(--line)}
 
 /* features */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
-.feat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:26px;box-shadow:var(--shadow);transition:transform .25s}
-.feat:hover{transform:translateY(-3px)}
-.ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:23px;margin-bottom:16px;background:color-mix(in srgb,var(--c) 16%,transparent)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:60px}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:var(--r3);padding:28px;box-shadow:var(--shadow);transition:transform .25s var(--ease),box-shadow .25s,border-color .25s}
+.feat:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line2)}
+.ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:18px;color:var(--t1);background:color-mix(in oklab,var(--t1) 10%,transparent);border:1px solid color-mix(in oklab,var(--t1) 18%,transparent)}
+.ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .feat p{color:var(--muted);font-size:15.5px;margin-top:8px}
 
 /* open source */
-.os{position:relative;border-radius:32px;padding:clamp(32px,6vw,64px);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;text-align:center}
-.os::before{content:"";position:absolute;inset:0;padding:2px;border-radius:inherit;background:var(--brand);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.os .cta{margin-top:30px}
-.code{display:inline-block;max-width:100%;overflow-x:auto;margin-top:28px;padding:12px 18px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font:14px/1.4 ui-monospace,"SF Mono",Menlo,monospace;color:var(--text);text-align:left;overflow-wrap:anywhere}
+.os{position:relative;border-radius:var(--r4);padding:clamp(36px,6vw,72px);background:var(--card);box-shadow:var(--shadow-lg);overflow:hidden;text-align:center}
+.os::before{content:"";position:absolute;inset:0;padding:1.5px;border-radius:inherit;background:var(--brand);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.os .cta{margin-top:32px}
+.code{display:inline-block;max-width:100%;overflow-x:auto;margin-top:28px;padding:12px 18px;border-radius:var(--r1);background:var(--bg2);border:1px solid var(--line);font:14px/1.4 var(--mono);color:var(--text);text-align:left;overflow-wrap:anywhere}
 .code span{color:var(--muted);user-select:none}
 
 /* install */
-.install{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:start;margin-top:48px}
-.ol{list-style:none;padding:0;margin:0;display:grid;gap:14px;counter-reset:s}
-.ol li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
-.ol li::before{content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);font-weight:800}
-.ol b{font-weight:650}
-.why{background:linear-gradient(160deg,color-mix(in srgb,var(--p) 12%,var(--card)),color-mix(in srgb,var(--o) 10%,var(--card)));border:1px solid var(--line);border-radius:var(--r);padding:28px}
+.install{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:start;margin-top:56px}
+.ol{list-style:none;padding:0;margin:0;display:grid;gap:12px;counter-reset:s}
+.ol li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:16px 20px}
+.ol li::before{content:counter(s);display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--bg2);border:1px solid var(--line2);font-weight:600;font-size:14px}
+.ol b{font-weight:600}
+.why{background:linear-gradient(160deg,color-mix(in oklab,var(--p) 9%,var(--card)),color-mix(in oklab,var(--o) 8%,var(--card)));border:1px solid var(--line);border-radius:var(--r3);padding:28px}
 .why h3{margin-bottom:10px}
 .why p{color:var(--muted);font-size:15.5px}
-.why p+p{margin-top:10px}
 .req{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 24px;padding:0;list-style:none}
-.req li{font-size:14px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.req li{font-size:13.5px;font-weight:500;padding:5px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line2)}
 
 /* faq */
-.faq{max-width:780px;margin:48px auto 0}
+.faq{max-width:760px;margin:52px auto 0;border-top:1px solid var(--line)}
 details{border-bottom:1px solid var(--line)}
-summary{cursor:pointer;list-style:none;padding:22px 40px 22px 0;font-size:19px;font-weight:650;position:relative}
+summary{cursor:pointer;list-style:none;padding:22px 44px 22px 0;font-size:18px;font-weight:600;letter-spacing:-.015em;position:relative}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:26px;font-weight:400;color:var(--muted);transition:transform .2s}
-details[open] summary::after{transform:translateY(-50%) rotate(45deg)}
+summary::after{content:"";position:absolute;right:8px;top:50%;width:10px;height:10px;border-right:1.75px solid var(--muted);border-bottom:1.75px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .25s var(--ease)}
+details[open] summary::after{transform:translateY(-30%) rotate(225deg)}
 details p{color:var(--muted);padding:0 0 22px;max-width:680px}
 
-footer{padding:40px 0 56px;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
-footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
-footer a{color:var(--muted)}
-footer .brand{font-size:16px;margin:0}
+/* footer */
+footer{padding:64px 0 40px;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
+.fgrid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:32px}
+.fgrid p{margin-top:12px;line-height:1.55}
+.fgrid ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.fh{font-size:13px;font-weight:600;color:var(--text);margin:0 0 14px}
+footer a{color:var(--muted);text-decoration:none;transition:color .2s}
+footer a:hover{color:var(--text);text-decoration:underline}
+footer .ul{text-decoration:underline}
+footer .brand{font-size:16px;margin:0;color:var(--text)}
+footer .brand:hover{text-decoration:none}
+.fbase{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);font-size:13px}
+
+/* scroll reveal (only when JS turns it on) */
+.rv-on .rv{opacity:0;translate:0 12px;transition:opacity .7s var(--ease) var(--d,0s),translate .7s var(--ease) var(--d,0s),transform .25s var(--ease),box-shadow .25s,border-color .25s}
+.rv-on .rv.in{opacity:1;translate:none}
+.grid>.rv:nth-child(3n+2),.steps>.rv:nth-child(2){--d:.08s}
+.grid>.rv:nth-child(3n),.steps>.rv:nth-child(3){--d:.16s}
 
 @media (max-width:900px){
-  .split,.install{grid-template-columns:1fr;gap:40px}
+  .split,.install{grid-template-columns:1fr;gap:44px}
   .steps,.grid{grid-template-columns:1fr 1fr}
   .steps li:last-child{grid-column:1/-1}
+  .fgrid{grid-template-columns:1fr 1fr 1fr}
+  .fbrand{grid-column:1/-1}
 }
 @media (max-width:760px){
   .links{display:none}
-  section{padding:72px 0}
-  .row,.ruler{grid-template-columns:1fr;gap:6px}
-  .row .lab{text-align:left}
-  .ruler>span{display:none}
-  .seg:first-child{font-size:17px;padding:0 10px}
-  .seg{height:46px}
+  section{padding:80px 0}
+  .ruler,.row{grid-template-columns:minmax(0,1fr);gap:6px}
+  .ruler>span:first-child{display:none}
+  .lab{text-align:left}
+  .lab small{display:inline;margin-left:6px}
+  .chip{height:58px;padding:5px 7px;font-size:12px;line-height:1.2;border-radius:8px}
+  .head{top:-4px;bottom:-4px}
+  .tl{gap:14px}
 }
 @media (max-width:600px){
   .wrap{padding:0 16px}
   .steps,.grid{grid-template-columns:1fr}
-  .hero{padding-top:48px}
+  .hero{padding-top:52px}
   .btn{width:100%}
   .cta,.dlgroup{width:100%}
-  .stage{margin-top:44px}
+  .stage{margin-top:48px}
   .shot{transform:none;border-radius:12px}
   .pill.gh .t{display:none}
-  .pill{padding:7px 11px}
+  .pill{padding:7px 12px}
   .badge{font-size:13px;text-align:left}
+  .fgrid{grid-template-columns:1fr 1fr;gap:28px 20px}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  *{transition:none!important}
+  *,*::before,*::after{transition:none!important}
   .shot{transform:none}
+  .stage::before{animation:none}
+  .head{display:none}
+  .chip{animation:none;background-color:var(--tc);color:var(--on);border-color:transparent}
 }
+@media print{.rv{opacity:1!important;translate:none!important}}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-gh" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol><symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3a1.5 1.5 0 0 1 1.5 1.5v8.88l2.94-2.94a1.5 1.5 0 1 1 2.12 2.12l-5.5 5.5a1.5 1.5 0 0 1-2.12 0l-5.5-5.5a1.5 1.5 0 1 1 2.12-2.12l2.94 2.94V4.5A1.5 1.5 0 0 1 12 3Zm-7 16.5h14a1.5 1.5 0 0 1 0 3H5a1.5 1.5 0 0 1 0-3Z"/></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-gh" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol>
+<symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3a1.5 1.5 0 0 1 1.5 1.5v8.88l2.94-2.94a1.5 1.5 0 1 1 2.12 2.12l-5.5 5.5a1.5 1.5 0 0 1-2.12 0l-5.5-5.5a1.5 1.5 0 1 1 2.12-2.12l2.94 2.94V4.5A1.5 1.5 0 0 1 12 3Zm-7 16.5h14a1.5 1.5 0 0 1 0 3H5a1.5 1.5 0 0 1 0-3Z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5v-3a4 4 0 0 1 8 0v3M12 14.5v2"/></symbol>
+<symbol id="i-sync" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.5M9.5 2.5h5"/></symbol>
+<symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20v-3.5L15.5 5a2.47 2.47 0 0 1 3.5 3.5L7.5 20H4Z"/><path d="m13.5 7 3.5 3.5"/></symbol>
+<symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 11.5h10M7 15h6"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-11 6.63L4 19.5l1.37-4.6A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 10h6M9 13.5h3.5"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 14.5V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12.5v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+</svg>
 <a class="skip" href="#main">Skip to content</a>
 <header class="nav">
   <nav class="wrap" aria-label="Main">
-    <a class="brand" href="#top"><img src="images/icon.png" alt="" width="30" height="30">Subly</a>
+    <a class="brand" href="#top"><img src="images/icon.png" alt="" width="28" height="28">Subly</a>
     <div class="links">
       <a href="#features">Features</a>
       <a href="#how">How it works</a>
@@ -236,7 +304,17 @@ footer .brand{font-size:16px;margin:0}
 <section class="hero" id="top">
   <div class="wrap">
     <a class="badge" href="https://github.com/DhananjayBhosale/Subly/releases"><b>New in 1.1</b>A simpler app, more accurate captions</a>
-    <h1>Captions that <span class="grad">keep up</span> with you.</h1>
+    <h1 class="headline">
+      <span class="sr-only">Captions that keep up with you.</span>
+      <span class="h1a" aria-hidden="true">Captions that</span>
+      <span class="rot" aria-hidden="true">
+        <span class="ph on">keep up with you.</span>
+        <span class="ph">speak Hinglish.</span>
+        <span class="ph">stay in sync.</span>
+        <span class="ph">pop on Reels.</span>
+        <span class="ph">never leave your Mac.</span>
+      </span>
+    </h1>
     <p class="lead">Subly listens to your video and writes the captions right on your Mac. Nothing is uploaded. Get Hindi, Hinglish and English from one listen, perfectly in sync.</p>
     <div class="cta">
       <div class="dlgroup">
@@ -254,29 +332,31 @@ footer .brand{font-size:16px;margin:0}
 
 <section class="alt" id="tracks">
   <div class="wrap center">
-    <span class="kicker">One listen</span>
-    <h2>Three tracks. <span class="grad">One timing.</span></h2>
-    <p class="lead" style="margin-top:18px">Subly hears your video once and writes up to three caption tracks that start and stop at exactly the same moments.</p>
-    <div class="tracks" role="list" aria-label="Example caption tracks">
-      <div class="ruler" aria-hidden="true"><span></span><div><span>0:00.0</span><span>0:01.0</span><span>0:03.3</span></div></div>
-      <div class="row r1" role="listitem"><span class="lab">Spoken script<small>in its own letters</small></span><div class="bar"><span class="seg" lang="hi">आप कैसे हो?</span><span class="seg"></span><span class="seg"></span></div></div>
-      <div class="row r2" role="listitem"><span class="lab">Hinglish<small>same words, English letters</small></span><div class="bar"><span class="seg" lang="hi-Latn">Aap kaise ho?</span><span class="seg"></span><span class="seg"></span></div></div>
-      <div class="row r3" role="listitem"><span class="lab">Translation<small>with Apple’s on-device translation</small></span><div class="bar"><span class="seg">How are you?</span><span class="seg"></span><span class="seg"></span></div></div>
+    <div class="rv">
+      <span class="kicker">One listen</span>
+      <h2>Three tracks. <span class="acc">One timing.</span></h2>
+      <p class="lead head-gap">Subly hears your video once and writes up to three caption tracks that start and stop at exactly the same moments.</p>
     </div>
-    <p class="note">Pick one, two or all three. Subly detects the spoken language for you.</p>
+    <div class="tl rv" role="list" aria-label="Example caption tracks">
+      <div class="ruler" aria-hidden="true"><span></span><div class="ticks"><span>0:00.0</span><span>0:01.2</span><span>0:03.6</span></div></div>
+      <div class="row r1" role="listitem"><span class="lab">Spoken script<small>in its own letters</small></span><div class="lane"><i class="head" aria-hidden="true"></i><span class="chip c1" lang="hi">आप कैसे हो?</span><span class="chip c2" lang="hi">यह iPhone का डिस्प्ले बहुत अच्छा है</span><span class="chip c3" lang="hi">कैमरा की क्वालिटी भी शानदार है</span></div></div>
+      <div class="row r2" role="listitem"><span class="lab">Hinglish<small>same words, English letters</small></span><div class="lane"><i class="head" aria-hidden="true"></i><span class="chip c1" lang="hi-Latn">Aap kaise ho?</span><span class="chip c2" lang="hi-Latn">Yah iPhone ka display bahut achchha hai</span><span class="chip c3" lang="hi-Latn">Camera ki quality bhi shaandaar hai</span></div></div>
+      <div class="row r3" role="listitem"><span class="lab">Translation<small>with Apple’s on-device translation</small></span><div class="lane"><i class="head" aria-hidden="true"></i><span class="chip c1">How are you?</span><span class="chip c2">This iPhone’s display is really good</span><span class="chip c3">The camera quality is great too</span></div></div>
+    </div>
+    <p class="note">Pick one, two or all three. With the free Whisper model installed, Subly detects the spoken language for you.</p>
   </div>
 </section>
 
 <section id="looks">
   <div class="wrap split">
-    <figure class="gifcard">
+    <figure class="gifcard rv">
       <img src="images/captions.gif" width="534" height="462" loading="lazy" decoding="async" alt="Animated demo: the same purple, pink and orange reel shown twice side by side, once with Karaoke captions that light up word by word and once with Bold Pop captions.">
       <figcaption>Karaoke and Bold Pop, side by side</figcaption>
     </figure>
-    <div>
+    <div class="rv">
       <span class="kicker">Caption looks</span>
-      <h2>Pick a look. <span class="grad">Make it pop.</span></h2>
-      <p class="lead" style="margin-top:18px">Six looks made for Reels and Shorts. Then tune the font, size, colour, background and where the captions sit.</p>
+      <h2>Pick a look. <span class="acc">Make it pop.</span></h2>
+      <p class="lead head-gap">Six looks made for Reels and Shorts. Then tune the font, size, colour, background and where the captions sit.</p>
       <ul class="looks" aria-label="Caption looks">
         <li class="l-clean">Clean</li>
         <li class="l-pop">Bold Pop</li>
@@ -291,21 +371,21 @@ footer .brand{font-size:16px;margin:0}
 
 <section class="alt" id="how">
   <div class="wrap">
-    <div class="center">
+    <div class="center rv">
       <span class="kicker">How it works</span>
       <h2>Three easy steps.</h2>
-      <p class="lead" style="margin-top:18px">From video to finished captions, without leaving your Mac.</p>
+      <p class="lead head-gap">From video to finished captions, without leaving your Mac.</p>
     </div>
     <ol class="steps">
-      <li class="step">
+      <li class="step rv">
         <img src="images/home.png" width="1200" height="750" loading="lazy" decoding="async" alt="Subly home screen with a drop area for a video and a grid of three projects: Phone review, Sunset vlog and Tapas tour.">
         <div class="txt"><span class="num" aria-hidden="true">1</span><h3>Add Video</h3><p>Drop in an MP4, MOV or audio file. Your projects wait for you on the home screen.</p></div>
       </li>
-      <li class="step">
+      <li class="step rv">
         <img src="images/choose.png" width="1200" height="749" loading="lazy" decoding="async" alt="The Choose step. Hindi is detected as the spoken language, with Hinglish and Hindi caption cards selected and English translation available. A Names and brands field contains iPhone.">
-        <div class="txt"><span class="num" aria-hidden="true">2</span><h3>Choose</h3><p>Subly detects the language. Pick your caption tracks and add names and brands so they’re spelled right.</p></div>
+        <div class="txt"><span class="num" aria-hidden="true">2</span><h3>Choose</h3><p>Check the spoken language — Subly detects it when the Whisper model is installed. Pick your caption tracks and add names and brands so they’re spelled right.</p></div>
       </li>
-      <li class="step">
+      <li class="step rv">
         <img src="images/editor-light.png" width="1200" height="750" loading="lazy" decoding="async" alt="The editor in light mode. A sunset vlog shows the caption “reflections. At high brightness it feels crease-free.” above a timeline of captions, with a Sync control in the side panel.">
         <div class="txt"><span class="num" aria-hidden="true">3</span><h3>Edit &amp; Share</h3><p>Click a caption on the video to fix it, pick a look, then export your video or caption file.</p></div>
       </li>
@@ -315,17 +395,17 @@ footer .brand{font-size:16px;margin:0}
 
 <section id="features">
   <div class="wrap">
-    <div class="center">
+    <div class="center rv">
       <span class="kicker">Features</span>
-      <h2>Small app. <span class="grad">Big captions.</span></h2>
+      <h2>Small app. <span class="acc">Big captions.</span></h2>
     </div>
     <div class="grid">
-      <article class="feat"><div class="ico" style="--c:#34c759" aria-hidden="true">🔒</div><h3>Private</h3><p>Everything runs on your Mac. Your videos are never uploaded.</p></article>
-      <article class="feat"><div class="ico" style="--c:#0a84ff" aria-hidden="true">⏱️</div><h3>In sync</h3><p>Every track shares the same timings. If captions feel early or late, Sync nudges them all by 0.05 s.</p></article>
-      <article class="feat"><div class="ico" style="--c:#ff9f0a" aria-hidden="true">✏️</div><h3>Edit on the video</h3><p>Click a caption on the video to fix a word. Drag to move the captions. Undo anything.</p></article>
-      <article class="feat"><div class="ico" style="--c:#e63ca0" aria-hidden="true">🎨</div><h3>Caption looks</h3><p>Clean, Bold Pop, Karaoke, Boxed, Minimal and Typewriter, with your own font, size and colour.</p></article>
-      <article class="feat"><div class="ico" style="--c:#5828dc" aria-hidden="true">🗣️</div><h3>Made for Hinglish</h3><p>Hindi in Devanagari, the same words in English letters, or both. The optional Apex model is tuned for Hindi to Hinglish.</p></article>
-      <article class="feat"><div class="ico" style="--c:#ff453a" aria-hidden="true">📤</div><h3>Share anywhere</h3><p>Export a video with captions burned in for Reels, Shorts and Instagram, or save SRT, VTT, TXT or JSON.</p></article>
+      <article class="feat rv"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-lock"/></svg></div><h3>Private</h3><p>Everything runs on your Mac. Your videos are never uploaded.</p></article>
+      <article class="feat rv"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-sync"/></svg></div><h3>In sync</h3><p>Every track shares the same timings. If captions feel early or late, Sync nudges them all by 0.05 s.</p></article>
+      <article class="feat rv"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></div><h3>Edit on the video</h3><p>Click a caption on the video to fix a word. Drag to move the captions. Undo anything.</p></article>
+      <article class="feat rv"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-cc"/></svg></div><h3>Caption looks</h3><p>Clean, Bold Pop, Karaoke, Boxed, Minimal and Typewriter, with your own font, size and colour.</p></article>
+      <article class="feat rv"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-chat"/></svg></div><h3>Made for Hinglish</h3><p>Hindi in Devanagari, the same words in English letters, or both. The optional Apex model is tuned for Hindi to Hinglish.</p></article>
+      <article class="feat rv"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-share"/></svg></div><h3>Share anywhere</h3><p>Export a video with captions burned in for Reels, Shorts and Instagram, or save SRT, VTT, TXT or JSON.</p></article>
     </div>
     <p class="small center">Want more languages? Download the optional Whisper model (about 99 languages) inside the app. Models download only when you ask.</p>
   </div>
@@ -333,9 +413,9 @@ footer .brand{font-size:16px;margin:0}
 
 <section id="open-source" class="alt">
   <div class="wrap">
-    <div class="os">
+    <div class="os rv">
       <span class="kicker">Open source</span>
-      <h2>Free. Open. <span class="grad">Yours to read.</span></h2>
+      <h2>Free. Open. <span class="acc">Yours to read.</span></h2>
       <p class="lead" style="margin:18px auto 0">Subly is open source under the MIT licence. Read the code, report issues, contribute.</p>
       <div class="cta">
         <a class="btn btn-alt" href="https://github.com/DhananjayBhosale/Subly">Read the code</a>
@@ -348,18 +428,18 @@ footer .brand{font-size:16px;margin:0}
 
 <section id="install">
   <div class="wrap">
-    <div class="center">
+    <div class="center rv">
       <span class="kicker">Install</span>
       <h2>Install in four steps.</h2>
     </div>
     <div class="install">
-      <ol class="ol">
+      <ol class="ol rv">
         <li><div><b>Download Subly.dmg</b>, open it and drag Subly to Applications.</div></li>
         <li><div><b>Open Subly.</b> macOS says it can’t check the app. Click <b>Done</b>.</div></li>
         <li><div>Open <b>System Settings › Privacy &amp; Security</b> and scroll down.</div></li>
         <li><div>Click <b>Open Anyway</b> next to Subly. You only do this once.</div></li>
       </ol>
-      <div class="why">
+      <div class="why rv">
         <h3>Why the extra step?</h3>
         <p>Subly isn’t notarized by Apple yet, so macOS can’t check it the first time you open it. It’s a one-time step, and all of Subly’s code is public on GitHub for anyone to read.</p>
         <ul class="req" aria-label="Requirements">
@@ -376,14 +456,14 @@ footer .brand{font-size:16px;margin:0}
 
 <section class="alt" id="faq">
   <div class="wrap">
-    <div class="center">
+    <div class="center rv">
       <span class="kicker">FAQ</span>
       <h2>Questions, answered.</h2>
     </div>
-    <div class="faq">
+    <div class="faq rv">
       <details><summary>Is it free?</summary><p>Yes. Subly is free and open source under the MIT licence. Download it, use it, share it.</p></details>
       <details><summary>Does it upload my videos?</summary><p>No. Subly listens, writes and translates on your Mac, so your videos never leave it. The optional speech models download inside the app, and only when you ask.</p></details>
-      <details><summary>Which languages does it support?</summary><p>Subly detects the spoken language automatically and uses Apple’s built-in speech recognition out of the box. For more, download the optional Whisper model (about 99 languages) or Apex, which is tuned for Hindi to Hinglish. Translations use Apple’s on-device translation.</p></details>
+      <details><summary>Which languages does it support?</summary><p>Subly uses Apple’s built-in speech recognition out of the box, and detects the spoken language automatically once the free Whisper model is installed. For more, download the optional Whisper model (about 99 languages) or Apex, which is tuned for Hindi to Hinglish. Translations use Apple’s on-device translation.</p></details>
       <details><summary>Why does macOS show a security warning?</summary><p>Subly isn’t notarized by Apple yet, so macOS can’t check it the first time you open it. Click Done, then go to System Settings › Privacy &amp; Security, scroll down and click Open Anyway. You only need to do this once.</p></details>
       <details><summary>What do I need?</summary><p>A Mac with Apple Silicon running macOS 26 or later.</p></details>
     </div>
@@ -392,11 +472,75 @@ footer .brand{font-size:16px;margin:0}
 </main>
 
 <footer>
-  <div class="wrap">
-    <a class="brand" href="#top"><img src="images/icon.png" alt="" width="26" height="26" loading="lazy">Subly</a>
-    <span>Made by <a href="https://github.com/DhananjayBhosale">Dhananjay Bhosale</a></span>
-    <span><a href="https://github.com/DhananjayBhosale/Subly/blob/main/LICENSE">MIT licence</a> · <a href="https://github.com/DhananjayBhosale/Subly">GitHub</a></span>
+  <div class="wrap fgrid">
+    <div class="fbrand">
+      <a class="brand" href="#top"><img src="images/icon.png" alt="" width="26" height="26" loading="lazy">Subly</a>
+      <p>On-device captions for Mac.<br>Free · Open source · macOS 26+</p>
+    </div>
+    <nav aria-label="Product">
+      <p class="fh">Product</p>
+      <ul>
+        <li><a href="https://github.com/DhananjayBhosale/Subly/releases/latest/download/Subly.dmg">Download</a></li>
+        <li><a href="https://github.com/DhananjayBhosale/Subly/releases">Releases</a></li>
+        <li><a href="https://github.com/DhananjayBhosale/Subly/releases/latest">What’s new</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Open source">
+      <p class="fh">Open source</p>
+      <ul>
+        <li><a href="https://github.com/DhananjayBhosale/Subly">GitHub</a></li>
+        <li><a href="https://github.com/DhananjayBhosale/Subly/blob/main/LICENSE">Licence (MIT)</a></li>
+        <li><a href="https://github.com/DhananjayBhosale/Subly/blob/main/CONTRIBUTING.md">Contributing</a></li>
+      </ul>
+    </nav>
+    <div>
+      <p class="fh">About</p>
+      <ul>
+        <li>Made by <a class="ul" href="https://github.com/DhananjayBhosale">Dhananjay Bhosale</a></li>
+      </ul>
+    </div>
   </div>
+  <div class="wrap"><p class="fbase">Subly 1.1 · Released under the MIT licence.</p></div>
 </footer>
+<script>
+(function(){
+  var d=document,IO="IntersectionObserver"in window;
+  if(d.documentElement.classList.contains("rv-on")){
+    var rio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");rio.unobserve(e.target)}})},{rootMargin:"0px 0px -6% 0px",threshold:.08});
+    d.querySelectorAll(".rv").forEach(function(el){rio.observe(el)});
+  }
+  var tl=d.querySelector(".tl");
+  if(tl&&IO)new IntersectionObserver(function(es){tl.classList.toggle("paused",!es[es.length-1].isIntersecting)}).observe(tl);
+
+  var rot=d.querySelector(".rot");
+  if(!rot||matchMedia("(prefers-reduced-motion: reduce)").matches||!(window.CSS&&CSS.supports("color","color-mix(in oklab, red, blue)")))return;
+  var phs=[].slice.call(rot.querySelectorAll(".ph"));
+  function mix(f){return f<.55?"color-mix(in oklab,var(--t2) "+Math.round(f/.55*100)+"%,var(--t1))":"color-mix(in oklab,var(--t3) "+Math.round((f-.55)/.45*100)+"%,var(--t2))"}
+  phs.forEach(function(p){
+    var txt=p.textContent.trim(),L=txt.length,pos=0,ws=txt.split(" ");
+    p.textContent="";
+    ws.forEach(function(w,i){
+      var s=d.createElement("span");s.className="w";s.textContent=w;
+      s.style.setProperty("--i",i);s.style.setProperty("--c1",mix(pos/L));s.style.setProperty("--c2",mix((pos+w.length)/L));
+      p.appendChild(s);pos+=w.length+1;
+      if(i<ws.length-1)p.appendChild(d.createTextNode(" "));
+    });
+  });
+  var i=0,t=0;
+  function hold(p){return 450+p.children.length*300+320+1800}
+  function next(){
+    var a=phs[i];a.classList.remove("on");a.classList.add("out");
+    i=(i+1)%phs.length;var b=phs[i];
+    t=setTimeout(function(){b.classList.remove("out");b.classList.add("on");t=0;run()},260);
+  }
+  // Keeps ticking; in a hidden tab it skips the change rather than waiting for a
+  // visibility event, which some browsers never send to a page loaded in the background.
+  function run(){
+    var p=phs[i];
+    if(!t)t=setTimeout(function(){t=0;if(d.hidden){run();return}next()},hold(p));
+  }
+  rot.classList.add("live");run();
+})();
+</script>
 </body>
 </html>

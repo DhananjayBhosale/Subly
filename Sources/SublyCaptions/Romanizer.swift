@@ -1,6 +1,6 @@
 import Foundation
 
-/// Deterministic script → Latin conversion. PRD §11.
+/// Deterministic script → Latin conversion.
 ///
 /// Pipeline: ICU transliteration → per-language orthography rules → protected-term
 /// restoration. A Foundation-model rerank may refine the result afterwards, but it can
@@ -59,7 +59,7 @@ public struct Romanizer: Sendable {
 
     /// Languages where the deterministic pipeline is known to produce output a native
     /// speaker would accept. Everything else is offered at reduced confidence.
-    /// PRD §6.2 tier gate.
+    /// Quality tier gate.
     // Deliberately excludes zh/yue/ja: ICU produces syllable-spaced pinyin/romaji with
     // no word boundaries, which is not what a reader expects. Also excludes mr, which
     // no engine on any tested Mac offers.
@@ -82,7 +82,7 @@ public struct Romanizer: Sendable {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return Result(text: "", lowConfidence: false, note: nil) }
 
-        // Already Latin: Romanization is a no-op, not an error. PRD §10.6.
+        // Already Latin: Romanization is a no-op, not an error.
         if ScriptProfile.forLanguage(language).romanizable == false {
             return Result(text: trimmed, lowConfidence: false, note: "Source is already Latin script")
         }
@@ -103,7 +103,7 @@ public struct Romanizer: Sendable {
         let lexicon = Self.lexicon(adding: protectedTerms)
 
         // Token-wise so an already-Latin word is never transliterated or schwa-stripped.
-        // This is what keeps embedded English terms intact (PRD ASR-05) and stops
+        // This is what keeps embedded English terms intact and stops
         // `camera` becoming `camer`.
         var pieces: [String] = []
         var anyTransliterated = false
@@ -445,7 +445,7 @@ public struct Romanizer: Sendable {
 
     /// English loanwords come back from the recogniser in the source script
     /// (iPhone → आईफ़ोन → `aaeefona`). This restores the English spelling, which is
-    /// what a creator actually writes. PRD §11 step 3.
+    /// what a creator actually writes.
     static let defaultLexicon: [String: String] = {
         let pairs: [(String, String)] = [
             // Devices and brands

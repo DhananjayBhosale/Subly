@@ -4,7 +4,7 @@ import AVFoundation
 import CoreMedia
 import SublyCaptions
 
-/// Produces the timing spine. Exactly one pass per generation. PRD ASR-01, ASR-04.
+/// Produces the timing spine. Exactly one pass per generation.
 public actor TranscriptionService {
 
     public enum TranscriptionError: LocalizedError {
@@ -197,9 +197,8 @@ public actor TranscriptionService {
     /// Download the macOS speech asset for a language.
     ///
     /// NOTE: this is currently invoked from `transcribe`, i.e. by pressing Generate,
-    /// with no separate confirmation dialog. PRD ASR-08 asks for an explicit
-    /// confirmation step; the UI shows the size and a "Get it now" affordance
-    /// beforehand, but does not gate Generate. Tracked as a known gap.
+    /// with no separate confirmation dialog. The UI shows the size and a "Get it now"
+    /// affordance beforehand, but does not ask again. Listed in docs/KNOWN_LIMITS.md.
     public func installAssets(for language: String,
                               progress: (@Sendable (Double) -> Void)? = nil) async throws {
         guard let route = await route(for: language), let module = makeModule(route) else {

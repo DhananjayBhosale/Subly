@@ -2,7 +2,7 @@ import Foundation
 import SublyCaptions
 
 /// Orchestrates a generation run: media → audio → ONE speech pass → spine → slots →
-/// every selected track. PRD ASR-04, MULTI-02, MULTI-09.
+/// every selected track.
 public actor GenerationPipeline {
 
     /// A track's text before the cue grid is decided.
@@ -71,7 +71,7 @@ public actor GenerationPipeline {
         }
     }
 
-    /// One failed track never discards the successful ones. PRD MULTI-09.
+    /// One failed track never discards the successful ones.
     public struct Output: Sendable {
         public var spine: TimingSpine
         public var slots: [CueSlot]
@@ -392,7 +392,7 @@ public actor GenerationPipeline {
     }
 
     /// Slots whose words came back with weak confidence get marked for review rather
-    /// than presented as certain. PRD ASR-10.
+    /// than presented as certain.
     static func lowConfidenceSlots(spine: TimingSpine, slots: [CueSlot],
                                    threshold: Double = 0.4) -> Set<Int> {
         var out = Set<Int>()

@@ -89,7 +89,7 @@ PLIST
 
 # Bundle the statically linked whisper.cpp runtime for the optional Extended Engine.
 # Built with -DGGML_BACKEND_DL=OFF so Metal is embedded and nothing is loaded from
-# Homebrew at runtime — the bundle is self-contained (PRD EXT-05).
+# Homebrew at runtime — the bundle is self-contained.
 # A helper executable lives in Contents/Helpers, where code signing and notarization
 # expect nested code. In Resources it was left with only the linker's signature.
 if [ -f "$ROOT/Resources/engine/whisper-cli" ]; then
@@ -110,8 +110,12 @@ fi
     echo; echo "----"; echo
   fi
   echo "Speech models (downloaded only when you choose to):"
-  echo "• OpenAI Whisper models, GGML conversions from the whisper.cpp project — MIT licence."
+  echo "• OpenAI Whisper models, GGML conversions from the whisper.cpp project — MIT licence, below."
   echo "• Whisper-Hindi2Hinglish-Apex by Oriserve, GGML conversion by Marquestra — Apache-2.0, as stated on the model page. The weights were converted and quantised; OpenAI's MIT notice for the underlying Whisper model applies."
+  echo; echo "----"; echo
+  echo "OpenAI Whisper"; echo; cat "$ROOT/Resources/Licenses/Whisper-MIT.txt"
+  echo; echo "----"; echo
+  echo "Apache License 2.0 (Whisper-Hindi2Hinglish-Apex)"; echo; cat "$ROOT/Resources/Licenses/Apache-2.0.txt"
 } > "$APP/Contents/Resources/Acknowledgements.txt"
 
 if [ -f "$ROOT/Resources/AppIcon.icns" ]; then

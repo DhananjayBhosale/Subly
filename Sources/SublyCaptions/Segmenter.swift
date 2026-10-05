@@ -2,7 +2,7 @@ import Foundation
 
 /// Carves the timing spine into cue slots. Runs ONCE per generation; every selected
 /// output track then fills these same slots, which is what makes cue timings identical
-/// across tracks. PRD MULTI-02, CAP-03, CAP-08.
+/// across tracks.
 public struct Segmenter: Sendable {
     public let rules: CaptionRules
     public let profile: ScriptProfile
@@ -236,7 +236,7 @@ public struct Segmenter: Sendable {
 
     /// Break any slot that runs past the duration cap into equal word groups, at word
     /// boundaries so no text moves. A single long word can push a slot over the cap
-    /// during the main pass, so this is a separate corrective step. PRD CAP-06.
+    /// during the main pass, so this is a separate corrective step.
     private func splitOverlongSlots(_ input: [CueSlot], words: [TimedWord]) -> [CueSlot] {
         var out: [CueSlot] = []
         for slot in input {
@@ -280,7 +280,7 @@ public struct Segmenter: Sendable {
         return out
     }
 
-    /// Merge or extend slots that flash too briefly. PRD CAP-05.
+    /// Merge or extend slots that flash too briefly.
     private func enforceMinimumDuration(_ input: [CueSlot], words: [TimedWord],
                                         totalDuration: Double) -> [CueSlot] {
         guard !input.isEmpty else { return input }
@@ -343,7 +343,7 @@ public struct Segmenter: Sendable {
         return slots
     }
 
-    /// Guarantee chronological, non-overlapping slots. PRD CAP-04.
+    /// Guarantee chronological, non-overlapping slots.
     private func removeOverlaps(_ input: [CueSlot]) -> [CueSlot] {
         guard input.count > 1 else { return input }
         var slots = input.sorted { $0.start < $1.start }

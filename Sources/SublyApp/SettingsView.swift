@@ -113,7 +113,7 @@ private struct ManageModelsSection: View {
     }
 }
 
-/// Project storage and temporary-file control. PRD MED-09.
+/// Project storage and temporary-file control.
 /// What Subly is using on disk, itemised. Project storage and downloaded models were
 /// reported in different places with different units, so the same 574 MB model also
 /// appeared as 549 MB and nothing added up.

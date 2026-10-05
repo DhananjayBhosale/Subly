@@ -7,7 +7,7 @@ import SublyCaptions
 /// Which engine can produce which output, for which language, on THIS Mac.
 ///
 /// Everything the UI says about a language comes from here, built from runtime queries
-/// only — never from a hardcoded list or an OS-version guess. PRD ASR-07, §9.1.
+/// only — never from a hardcoded list or an OS-version guess.
 public actor CapabilityRegistry {
 
     // MARK: - Types
@@ -28,7 +28,7 @@ public actor CapabilityRegistry {
         public var isApple: Bool { self != .extendedEngine }
     }
 
-    /// PRD §6.2 quality tiers.
+    /// Quality tiers.
     public enum Tier: Int, Sendable, Codable, Comparable, Hashable {
         case unsupported = 0, available = 1, verified = 2, flagship = 3
         public static func < (a: Tier, b: Tier) -> Bool { a.rawValue < b.rawValue }
@@ -120,7 +120,7 @@ public actor CapabilityRegistry {
 
     // MARK: - Flagship / tier policy
 
-    /// PRD §6.2: launch-blocking languages, reviewed to the correction-time threshold.
+    /// Launch-blocking languages, reviewed to the correction-time threshold.
     static let flagshipCodes: Set<String> = ["en", "hi"]
     /// Reviewed by a native speaker for transcription and translation.
     static let verifiedCodes: Set<String> = [

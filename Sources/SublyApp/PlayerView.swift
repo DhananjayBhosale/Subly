@@ -4,7 +4,7 @@ import AVFoundation
 import SublyCaptions
 
 /// AVPlayerLayer hosted directly, so the original file plays with VideoToolbox
-/// hardware decode — ProRes, HEVC 10-bit, HDR — with no transcode. PRD §9.2.
+/// hardware decode — ProRes, HEVC 10-bit, HDR — with no transcode.
 struct PlayerLayerView: NSViewRepresentable {
     let player: AVPlayer
 

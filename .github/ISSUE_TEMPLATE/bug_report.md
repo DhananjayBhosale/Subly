@@ -13,7 +13,7 @@ labels: bug
 - macOS version (Apple menu > About This Mac):
 - Mac model (Apple Silicon only; Intel is not supported):
 - Subly version or commit (`git rev-parse --short HEAD`, or the build date):
-- Engine selected (Apple Intelligence / Apex / Whisper / Whisper Large / Medium / Small / Base):
+- Speech model selected (Automatic / Apple (built in) / Apex / Whisper / Whisper Large / Medium / Small / Base):
 - Spoken language and region (for example Hindi, hi-IN):
 - Media type: video / audio only
 - Outputs you ticked (original / romanized / translation, and the target language):

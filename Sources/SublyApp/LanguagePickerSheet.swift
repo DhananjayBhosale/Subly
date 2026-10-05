@@ -3,7 +3,7 @@ import SublyCaptions
 import SublyEngine
 
 /// ~64 languages need real navigation, not a long menu: search, region grouping, and
-/// per-language capability badges. PRD §6.4.
+/// per-language capability badges.
 struct LanguagePickerSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss

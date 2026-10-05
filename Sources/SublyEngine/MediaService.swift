@@ -3,7 +3,7 @@ import AVFoundation
 import CoreMedia
 
 /// Media probing and audio extraction via AVFoundation only. AVKit plays the ORIGINAL
-/// file, so there is no transcode proxy and no FFmpeg in the media path. PRD §9.2.
+/// file, so there is no transcode proxy and no FFmpeg in the media path.
 public struct MediaService: Sendable {
 
     public struct MediaInfo: Sendable, Codable, Hashable {
@@ -151,7 +151,6 @@ public struct MediaService: Sendable {
     // MARK: - Audio extraction
 
     /// Extract a mono working copy for the recogniser. The original is never modified.
-    /// PRD MED-03.
     /// `maxSeconds` limits how much audio is written — used by language detection,
     /// which only needs the opening of a clip and must not transcribe a whole file
     /// once per candidate language.

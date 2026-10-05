@@ -1,7 +1,7 @@
 import Foundation
 
 /// Turns per-slot text into line-broken cues that obey the caption rules.
-/// Deterministic: same input always gives the same output. PRD CAP-01/02/07/09.
+/// Deterministic: same input always gives the same output.
 public struct CaptionFormatter: Sendable {
     public let rules: CaptionRules
     public let profile: ScriptProfile
@@ -132,7 +132,7 @@ public struct CaptionFormatter: Sendable {
 
     /// Additionally demand a split where the text could not be read in the time
     /// available, which is how the reading-rate limit gets enforced rather than
-    /// merely reported. PRD CAP-09.
+    /// merely reported.
     public func requiredCueCount(for text: String, duration: Double) -> Int {
         let byLines = requiredCueCount(for: text)
         guard duration > 0, rules.maxReadingRate > 0 else { return byLines }
@@ -150,7 +150,7 @@ public struct CaptionFormatter: Sendable {
     /// This is what makes "identical timings across tracks" true rather than
     /// aspirational: instead of each track splitting its own slots (which desynced
     /// them), the slot itself is divided once, using the largest demand across all
-    /// tracks, and every track then fills the same sub-slots. PRD MULTI-02, CAP-08.
+    /// tracks, and every track then fills the same sub-slots.
     /// `fillable[slotIndex]` caps the subdivision at what every track can fill with
     /// real text, so no track is left holding a blank cue.
     public static func unify(slots: [CueSlot], demands: [[Int: Int]],
@@ -420,7 +420,7 @@ public struct CaptionFormatter: Sendable {
 
     // MARK: - Reflow
 
-    /// Reapply formatting rules without changing the spoken words. PRD CAP-11.
+    /// Reapply formatting rules without changing the spoken words.
     public func reflow(_ cues: [Cue]) -> [Cue] {
         var out: [Cue] = []
         // Character-based scripts have no inter-word spaces; joining with one would
@@ -448,7 +448,7 @@ public struct CaptionFormatter: Sendable {
 
     // MARK: - Validation
 
-    /// Report issues rather than silently mutating the user's text. PRD CAP-07.
+    /// Report issues rather than silently mutating the user's text.
     public func validate(_ cues: [Cue]) -> [CueDiagnostic] {
         var out: [CueDiagnostic] = []
         for (i, cue) in cues.enumerated() {

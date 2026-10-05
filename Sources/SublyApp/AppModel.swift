@@ -37,7 +37,7 @@ final class Project: Identifiable {
     var generationFailures: [(kind: OutputKind, message: String)] = []
 
     /// Per-track overlay visibility. Every generated track is visible by default —
-    /// simultaneous display is the point. PRD MULTI-03.
+    /// simultaneous display is the point.
     var visibleTrackIDs: Set<UUID> = []
     /// Edited since the captions were last generated or re-cut; re-cutting would lose it.
     var captionsEdited = false
@@ -535,7 +535,7 @@ final class AppModel {
     }
 
     /// Never leave an impossible output ticked. The UI disables it with a reason, and
-    /// this keeps state honest if the language changes underneath. PRD MULTI-01.
+    /// this keeps state honest if the language changes underneath.
     func pruneUnavailableOutputs() {
         guard let cap = currentCapability else { return }
         let translationPointedAtSource = project.translationTarget.split(separator: "-").first.map(String.init)?.lowercased()
@@ -604,7 +604,7 @@ final class AppModel {
     @ObservationIgnored private(set) var editRevision = 0
     @ObservationIgnored private var lastUndoTime = Date.distantPast
 
-    /// Debounced autosave. PRD PROJ-01.
+    /// Debounced autosave.
     func scheduleAutosave() {
         autosaveTask?.cancel()
         autosaveTask = Task { [weak self] in
@@ -1220,7 +1220,7 @@ final class AppModel {
         }
     }
 
-    /// Offer an existing sidecar subtitle as a read-only reference track. PRD MED-06.
+    /// Offer an existing sidecar subtitle as a read-only reference track.
     func loadReferenceTrackIfPresent(for url: URL) async {
         let base = url.deletingPathExtension()
         for ext in ["srt", "vtt"] {
@@ -1561,7 +1561,7 @@ final class AppModel {
         if case .running = generation, generationTask == nil { generation = .done }
     }
 
-    /// Editing one track never touches another track's text. PRD MULTI-05.
+    /// Editing one track never touches another track's text.
     func updateCueText(trackID: UUID, cueID: UUID, lines: [String]) {
         guard let t = project.tracks.firstIndex(where: { $0.id == trackID }),
               let c = project.tracks[t].cues.firstIndex(where: { $0.id == cueID }) else { return }
@@ -1572,7 +1572,7 @@ final class AppModel {
         scheduleAutosave()
     }
 
-    /// Timing is shared, so a timing change applies across every track. PRD MULTI-06.
+    /// Timing is shared, so a timing change applies across every track.
     ///
     /// The requested times are clamped to the neighbouring cues. Without this the
     /// editor could push one cue past the next, which produces an overlap that
@@ -1833,7 +1833,6 @@ final class AppModel {
     @ObservationIgnored private var recutTask: Task<Void, Never>?
 
     /// Add an output to an existing project WITHOUT re-running speech recognition.
-    /// PRD MULTI-07.
     ///
     /// - Parameter replacing: a track this one replaces (a translation into another
     ///   language). The old track stays until the new one is ready: removing it first

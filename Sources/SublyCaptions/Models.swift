@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Output kinds
 
-/// The three subtitle outputs a user may tick. PRD §10.6.
+/// The three subtitle outputs a user may tick.
 public enum OutputKind: String, Codable, Sendable, CaseIterable, Hashable {
     case translation      // → target language, English guaranteed
     case romanized        // source meaning, Latin script
@@ -32,7 +32,7 @@ public struct TimedWord: Codable, Sendable, Hashable {
     public var duration: Double { max(0, end - start) }
 }
 
-/// The single alignment authority for every derived track. PRD ASR-01, MULTI-02.
+/// The single alignment authority for every derived track.
 ///
 /// Exactly one speech pass produces this. Every subtitle track is then filled into
 /// the cue slots derived from it, which is what guarantees identical timings across
@@ -76,7 +76,7 @@ public struct TimingSpine: Codable, Sendable {
 // MARK: - Cue slots
 
 /// A time window carved from the spine. Every track fills the same slots, so cue
-/// boundaries are identical across tracks by construction. PRD CAP-08.
+/// boundaries are identical across tracks by construction.
 public struct CueSlot: Codable, Sendable, Hashable {
     public var index: Int
     public var start: Double
@@ -139,7 +139,7 @@ public struct Cue: Codable, Sendable, Hashable, Identifiable {
     public var duration: Double { max(0, end - start) }
     public var text: String { lines.joined(separator: "\n") }
     public var characterCount: Int { lines.reduce(0) { $0 + $1.count } }
-    /// Characters per second — the reading-rate metric. PRD CAP-09.
+    /// Characters per second — the reading-rate metric.
     public var readingRate: Double { duration > 0 ? Double(characterCount) / duration : .infinity }
 }
 
@@ -161,7 +161,7 @@ public struct SubtitleTrack: Codable, Sendable, Identifiable {
         self.engineID = engineID; self.isReference = isReference
     }
 
-    /// Filename suffix for export. PRD §10.9.
+    /// Filename suffix for export.
     public var fileSuffix: String { languageTag }
 }
 
@@ -229,7 +229,7 @@ public struct CaptionRules: Codable, Sendable, Hashable {
         maxWordsPerLine = Swift.max(maxWordsPerLine, perLine)
     }
 
-    /// PRD §9.7 default short-form preset.
+    /// The default short-form preset.
     /// Vertical social video: short, fast, punchy lines burned over the picture.
     ///
     /// This used to be `CaptionRules()` — the 17 chars/sec default — which made it the

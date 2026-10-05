@@ -2,7 +2,7 @@ import SwiftUI
 import SublyCaptions
 
 /// One row per track with cue blocks aligned vertically — they line up because every
-/// track shares the same spine. PRD MULTI-04.
+/// track shares the same spine.
 struct TimelineView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.layoutMode) private var layout
