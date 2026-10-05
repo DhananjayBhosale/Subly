@@ -1,0 +1,8 @@
+.build/
+build/
+vendor/
+models/
+Resources/engine/
+.DS_Store
+# Made on your Mac by Scripts/make_fixtures.sh; Apple voice recordings can't be shared.
+fixtures/

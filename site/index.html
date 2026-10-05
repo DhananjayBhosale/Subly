@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subly · Captions for Mac</title>
+<meta name="description" content="Subly makes captions for your videos right on your Mac. Nothing is uploaded. Get Hindi, Hinglish and English tracks from one listen, perfectly in sync. Free and open source.">
+<link rel="canonical" href="https://subly.dhananjaytech.app/">
+<link rel="icon" type="image/png" href="images/icon.png">
+<link rel="apple-touch-icon" href="images/icon.png">
+<meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0b10" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Subly">
+<meta property="og:title" content="Subly · Captions that keep up with you">
+<meta property="og:description" content="On-device captions for Mac. Hindi, Hinglish and English from one listen, perfectly in sync. Free and open source.">
+<meta property="og:url" content="https://subly.dhananjaytech.app">
+<meta property="og:image" content="https://subly.dhananjaytech.app/images/editor-dark.png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="1000">
+<meta property="og:image:alt" content="The Subly editor with a colourful vertical video and bold captions">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Subly · Captions that keep up with you">
+<meta name="twitter:description" content="On-device captions for Mac. Free and open source.">
+<meta name="twitter:image" content="https://subly.dhananjaytech.app/images/editor-dark.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Subly","operatingSystem":"macOS 26 or later","applicationCategory":"MultimediaApplication","softwareVersion":"1.1","downloadUrl":"https://github.com/DhananjayBhosale/Subly/releases/latest/download/Subly.dmg","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Dhananjay Bhosale","url":"https://github.com/DhananjayBhosale"}}</script>
+<style>
+:root{
+  --bg:#fbfbfd;--bg2:#f2f2f6;--card:#fff;--text:#1d1d1f;--muted:#55555b;--line:rgba(0,0,0,.09);
+  --ink:#0066cc;--blue:#0a84ff;--blue2:#0071e3;
+  --p:#5828dc;--k:#e63ca0;--o:#ff963c;
+  --t1:#5828dc;--t2:#c42a85;--t3:#c75a12;
+  --brand:linear-gradient(120deg,var(--p),var(--k) 55%,var(--o));
+  --brand-ink:linear-gradient(120deg,#5828dc,#c42a85);
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 12px 40px -12px rgba(40,20,90,.18);
+  --r:22px;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0b0b10;--bg2:#131319;--card:#1b1b22;--text:#f5f5f7;--muted:#a8a8b3;--line:rgba(255,255,255,.12);
+  --ink:#5aa9ff;--blue2:#0071e3;
+  --t1:#a98bff;--t2:#ff6ec7;--t3:#ffab5e;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px -16px rgba(0,0,0,.7);
+}}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro",Inter,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+a{color:var(--ink)}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:10px}
+h1,h2{text-wrap:balance}
+h1,h2,h3{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro",Inter,sans-serif;line-height:1.08;letter-spacing:-.025em;margin:0}
+h2{font-size:clamp(30px,5vw,48px);font-weight:750}
+h3{font-size:19px;letter-spacing:-.01em;line-height:1.25}
+p{margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.grad{background:linear-gradient(100deg,var(--t1),var(--t2) 55%,var(--t3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:640px}
+.center{text-align:center}.center .lead{margin-left:auto;margin-right:auto}
+section{padding:96px 0}
+.alt{background:var(--bg2)}
+.kicker{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--card);padding:8px 14px;border-radius:10px;z-index:99}
+.skip:focus{left:8px}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:12px;height:56px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;color:var(--text);text-decoration:none;letter-spacing:-.01em;margin-right:auto}
+.brand img{width:30px;height:30px;border-radius:8px}
+.links{display:flex;gap:4px}
+.links a{color:var(--text);text-decoration:none;font-size:14.5px;padding:6px 10px;border-radius:8px;opacity:.85}
+.links a:hover{opacity:1;background:var(--line)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;white-space:nowrap}
+.pill.gh{color:var(--text);border:1px solid var(--line);background:var(--card)}
+.pill.dl{color:#fff;background:var(--blue2)}
+.pill svg{width:16px;height:16px;fill:currentColor}
+
+/* buttons */
+.cta{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:flex-start}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border-radius:999px;font-size:19px;font-weight:700;text-decoration:none;transition:transform .2s,box-shadow .2s}
+.btn svg{width:20px;height:20px;fill:currentColor;flex:none}
+.btn-main{color:#fff;background:linear-gradient(180deg,var(--blue),var(--blue2));box-shadow:0 10px 30px -8px rgba(10,132,255,.6),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn-alt{color:var(--text);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.btn:hover{transform:translateY(-2px)}
+.btn-main:hover{box-shadow:0 16px 36px -8px rgba(10,132,255,.7)}
+.under{font-size:14px;color:var(--muted);margin-top:10px;text-align:center}
+.dlgroup{display:flex;flex-direction:column;align-items:center}
+
+/* hero */
+.hero{padding:72px 0 40px;text-align:center;position:relative;overflow:hidden}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:6px 14px 6px 6px;border-radius:999px;background:var(--card);border:1px solid var(--line);margin-bottom:26px;color:var(--text);text-decoration:none}
+.badge b{flex:none;white-space:nowrap;background:var(--brand-ink);color:#fff;font-size:12px;padding:3px 9px;border-radius:999px;letter-spacing:.02em}
+.hero h1{font-size:clamp(42px,8.4vw,92px);font-weight:800;letter-spacing:-.04em;max-width:14ch;margin:0 auto 22px}
+.hero .lead{margin:0 auto 34px}
+.meta{font-size:13.5px;color:var(--muted);margin-top:18px}
+.meta a{color:var(--muted)}
+.stage{position:relative;margin:64px auto 0;max-width:1040px;perspective:1800px}
+.stage::before{content:"";position:absolute;inset:8% 6% -4%;background:var(--brand);filter:blur(70px);opacity:.45;border-radius:40%;z-index:-1}
+.shot{margin:0;border-radius:18px;overflow:hidden;box-shadow:0 40px 80px -30px rgba(30,10,70,.55),0 0 0 1px rgba(255,255,255,.08);transform:rotateX(9deg) scale(.98);transform-origin:50% 100%;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.stage:hover .shot{transform:none}
+
+/* tracks */
+.tracks{margin:56px auto 0;max-width:860px;display:grid;gap:14px}
+.row{display:grid;grid-template-columns:170px 1fr;gap:16px;align-items:center}
+.row .lab{font-size:14px;font-weight:600;color:var(--muted);text-align:right;line-height:1.3}
+.row .lab small{display:block;font-weight:500;font-size:12.5px;opacity:.9}
+.bar{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:var(--shadow)}
+.seg{height:52px;border-radius:11px;flex:1;background:repeating-linear-gradient(135deg,var(--line) 0 6px,transparent 6px 12px)}
+.seg:first-child{flex:2.3;display:flex;align-items:center;padding:0 14px;font-size:21px;font-weight:750;letter-spacing:-.01em;white-space:nowrap;overflow:hidden}
+.seg:nth-child(2){flex:1.15}.seg:nth-child(3){flex:1.5}
+.r1 .seg:first-child{background:var(--p);color:#fff;transform:rotate(-1.2deg)}
+.r2 .seg:first-child{background:#c42a85;color:#fff;transform:rotate(.8deg)}
+.r3 .seg:first-child{background:var(--o);color:#1d1d1f;transform:rotate(-.6deg)}
+.ruler{display:grid;grid-template-columns:170px 1fr;gap:16px;font:12.5px/1 ui-monospace,"SF Mono",Menlo,monospace;color:var(--muted)}
+.ruler div{display:flex;padding:0 7px}
+.ruler span:first-child{flex:2.3}.ruler span:nth-child(2){flex:1.15}.ruler span:nth-child(3){flex:1.5}
+.note{margin-top:28px;font-size:15px;color:var(--muted)}
+
+/* looks */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.gifcard{margin:0;background:linear-gradient(140deg,#2a1466,#7a1f63 55%,#a64a1f);padding:18px;border-radius:28px;box-shadow:var(--shadow)}
+.gifcard img{border-radius:16px;width:100%}
+.gifcard figcaption{color:#fff;font-size:14px;text-align:center;margin-top:12px;opacity:.92}
+.looks{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;padding:0;list-style:none}
+.looks li{font-size:16px;padding:9px 16px;border-radius:12px;background:#1d1d22;color:#fff;border:1px solid var(--line)}
+.l-clean{font-weight:600}
+.l-pop{font-weight:900;text-transform:uppercase;letter-spacing:.02em;text-shadow:0 2px 0 #000}
+.l-kar{font-weight:800}.l-kar span{color:#ffd60a}
+.l-box{font-weight:700;background:#000!important;outline:2px solid #fff;outline-offset:-5px}
+.l-min{font-weight:400;opacity:1;letter-spacing:.01em}
+.l-type{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:15px!important}
+.l-type::after{content:"▍";color:#ff963c;margin-left:2px}
+.small{font-size:15px;color:var(--muted);margin-top:18px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px;padding:0;list-style:none}
+.step{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.step .txt{padding:24px 24px 26px}
+.num{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--brand-ink);color:#fff;font-weight:800;font-size:15px;margin-bottom:12px}
+.step p{color:var(--muted);font-size:15.5px;margin-top:6px}
+.step img{border-bottom:1px solid var(--line);margin-top:auto;order:2;border-top:1px solid var(--line);border-bottom:0}
+
+/* features */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:26px;box-shadow:var(--shadow);transition:transform .25s}
+.feat:hover{transform:translateY(-3px)}
+.ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:23px;margin-bottom:16px;background:color-mix(in srgb,var(--c) 16%,transparent)}
+.feat p{color:var(--muted);font-size:15.5px;margin-top:8px}
+
+/* open source */
+.os{position:relative;border-radius:32px;padding:clamp(32px,6vw,64px);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;text-align:center}
+.os::before{content:"";position:absolute;inset:0;padding:2px;border-radius:inherit;background:var(--brand);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.os .cta{margin-top:30px}
+.code{display:inline-block;max-width:100%;overflow-x:auto;margin-top:28px;padding:12px 18px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font:14px/1.4 ui-monospace,"SF Mono",Menlo,monospace;color:var(--text);text-align:left;overflow-wrap:anywhere}
+.code span{color:var(--muted);user-select:none}
+
+/* install */
+.install{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:start;margin-top:48px}
+.ol{list-style:none;padding:0;margin:0;display:grid;gap:14px;counter-reset:s}
+.ol li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
+.ol li::before{content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);font-weight:800}
+.ol b{font-weight:650}
+.why{background:linear-gradient(160deg,color-mix(in srgb,var(--p) 12%,var(--card)),color-mix(in srgb,var(--o) 10%,var(--card)));border:1px solid var(--line);border-radius:var(--r);padding:28px}
+.why h3{margin-bottom:10px}
+.why p{color:var(--muted);font-size:15.5px}
+.why p+p{margin-top:10px}
+.req{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 24px;padding:0;list-style:none}
+.req li{font-size:14px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+
+/* faq */
+.faq{max-width:780px;margin:48px auto 0}
+details{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;list-style:none;padding:22px 40px 22px 0;font-size:19px;font-weight:650;position:relative}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:26px;font-weight:400;color:var(--muted);transition:transform .2s}
+details[open] summary::after{transform:translateY(-50%) rotate(45deg)}
+details p{color:var(--muted);padding:0 0 22px;max-width:680px}
+
+footer{padding:40px 0 56px;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+footer a{color:var(--muted)}
+footer .brand{font-size:16px;margin:0}
+
+@media (max-width:900px){
+  .split,.install{grid-template-columns:1fr;gap:40px}
+  .steps,.grid{grid-template-columns:1fr 1fr}
+  .steps li:last-child{grid-column:1/-1}
+}
+@media (max-width:760px){
+  .links{display:none}
+  section{padding:72px 0}
+  .row,.ruler{grid-template-columns:1fr;gap:6px}
+  .row .lab{text-align:left}
+  .ruler>span{display:none}
+  .seg:first-child{font-size:17px;padding:0 10px}
+  .seg{height:46px}
+}
+@media (max-width:600px){
+  .wrap{padding:0 16px}
+  .steps,.grid{grid-template-columns:1fr}
+  .hero{padding-top:48px}
+  .btn{width:100%}
+  .cta,.dlgroup{width:100%}
+  .stage{margin-top:44px}
+  .shot{transform:none;border-radius:12px}
+  .pill.gh .t{display:none}
+  .pill{padding:7px 11px}
+  .badge{font-size:13px;text-align:left}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important}
+  .shot{transform:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-gh" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol><symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3a1.5 1.5 0 0 1 1.5 1.5v8.88l2.94-2.94a1.5 1.5 0 1 1 2.12 2.12l-5.5 5.5a1.5 1.5 0 0 1-2.12 0l-5.5-5.5a1.5 1.5 0 1 1 2.12-2.12l2.94 2.94V4.5A1.5 1.5 0 0 1 12 3Zm-7 16.5h14a1.5 1.5 0 0 1 0 3H5a1.5 1.5 0 0 1 0-3Z"/></symbol></svg>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav">
+  <nav class="wrap" aria-label="Main">
+    <a class="brand" href="#top"><img src="images/icon.png" alt="" width="30" height="30">Subly</a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#open-source">Open source</a>
+    </div>
+    <a class="pill gh" href="https://github.com/DhananjayBhosale/Subly" aria-label="Subly on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-gh"/></svg><span class="t">Star</span></a>
+    <a class="pill dl" href="https://github.com/DhananjayBhosale/Subly/releases/latest/download/Subly.dmg">Download</a>
+  </nav>
+</header>
+
+<main id="main">
+<section class="hero" id="top">
+  <div class="wrap">
+    <a class="badge" href="https://github.com/DhananjayBhosale/Subly/releases"><b>New in 1.1</b>A simpler app, more accurate captions</a>
+    <h1>Captions that <span class="grad">keep up</span> with you.</h1>
+    <p class="lead">Subly listens to your video and writes the captions right on your Mac. Nothing is uploaded. Get Hindi, Hinglish and English from one listen, perfectly in sync.</p>
+    <div class="cta">
+      <div class="dlgroup">
+        <a class="btn btn-main" href="https://github.com/DhananjayBhosale/Subly/releases/latest/download/Subly.dmg"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dl"/></svg>Download for Mac</a>
+        <p class="under">Free · Open source · macOS 26+</p>
+      </div>
+      <a class="btn btn-alt" href="https://github.com/DhananjayBhosale/Subly"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-gh"/></svg>View on GitHub</a>
+    </div>
+    <p class="meta">Version 1.1 · about 3 MB · Apple Silicon · <a href="https://github.com/DhananjayBhosale/Subly/releases">All releases</a></p>
+    <div class="stage">
+      <figure class="shot"><img src="images/editor-dark.png" width="1600" height="1000" fetchpriority="high" alt="The Subly editor in dark mode. A colourful vertical video shows the bold caption “Yah iPhone ka display bahut achchha hai”, with Hindi and Hinglish caption tracks lined up on the timeline and caption looks in the side panel."></figure>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="tracks">
+  <div class="wrap center">
+    <span class="kicker">One listen</span>
+    <h2>Three tracks. <span class="grad">One timing.</span></h2>
+    <p class="lead" style="margin-top:18px">Subly hears your video once and writes up to three caption tracks that start and stop at exactly the same moments.</p>
+    <div class="tracks" role="list" aria-label="Example caption tracks">
+      <div class="ruler" aria-hidden="true"><span></span><div><span>0:00.0</span><span>0:01.0</span><span>0:03.3</span></div></div>
+      <div class="row r1" role="listitem"><span class="lab">Spoken script<small>in its own letters</small></span><div class="bar"><span class="seg" lang="hi">आप कैसे हो?</span><span class="seg"></span><span class="seg"></span></div></div>
+      <div class="row r2" role="listitem"><span class="lab">Hinglish<small>same words, English letters</small></span><div class="bar"><span class="seg" lang="hi-Latn">Aap kaise ho?</span><span class="seg"></span><span class="seg"></span></div></div>
+      <div class="row r3" role="listitem"><span class="lab">Translation<small>with Apple’s on-device translation</small></span><div class="bar"><span class="seg">How are you?</span><span class="seg"></span><span class="seg"></span></div></div>
+    </div>
+    <p class="note">Pick one, two or all three. Subly detects the spoken language for you.</p>
+  </div>
+</section>
+
+<section id="looks">
+  <div class="wrap split">
+    <figure class="gifcard">
+      <img src="images/captions.gif" width="534" height="462" loading="lazy" decoding="async" alt="Animated demo: the same purple, pink and orange reel shown twice side by side, once with Karaoke captions that light up word by word and once with Bold Pop captions.">
+      <figcaption>Karaoke and Bold Pop, side by side</figcaption>
+    </figure>
+    <div>
+      <span class="kicker">Caption looks</span>
+      <h2>Pick a look. <span class="grad">Make it pop.</span></h2>
+      <p class="lead" style="margin-top:18px">Six looks made for Reels and Shorts. Then tune the font, size, colour, background and where the captions sit.</p>
+      <ul class="looks" aria-label="Caption looks">
+        <li class="l-clean">Clean</li>
+        <li class="l-pop">Bold Pop</li>
+        <li class="l-kar">Kara<span>oke</span></li>
+        <li class="l-box">Boxed</li>
+        <li class="l-min">Minimal</li>
+        <li class="l-type">Typewriter</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="how">
+  <div class="wrap">
+    <div class="center">
+      <span class="kicker">How it works</span>
+      <h2>Three easy steps.</h2>
+      <p class="lead" style="margin-top:18px">From video to finished captions, without leaving your Mac.</p>
+    </div>
+    <ol class="steps">
+      <li class="step">
+        <img src="images/home.png" width="1200" height="750" loading="lazy" decoding="async" alt="Subly home screen with a drop area for a video and a grid of three projects: Phone review, Sunset vlog and Tapas tour.">
+        <div class="txt"><span class="num" aria-hidden="true">1</span><h3>Add Video</h3><p>Drop in an MP4, MOV or audio file. Your projects wait for you on the home screen.</p></div>
+      </li>
+      <li class="step">
+        <img src="images/choose.png" width="1200" height="749" loading="lazy" decoding="async" alt="The Choose step. Hindi is detected as the spoken language, with Hinglish and Hindi caption cards selected and English translation available. A Names and brands field contains iPhone.">
+        <div class="txt"><span class="num" aria-hidden="true">2</span><h3>Choose</h3><p>Subly detects the language. Pick your caption tracks and add names and brands so they’re spelled right.</p></div>
+      </li>
+      <li class="step">
+        <img src="images/editor-light.png" width="1200" height="750" loading="lazy" decoding="async" alt="The editor in light mode. A sunset vlog shows the caption “reflections. At high brightness it feels crease-free.” above a timeline of captions, with a Sync control in the side panel.">
+        <div class="txt"><span class="num" aria-hidden="true">3</span><h3>Edit &amp; Share</h3><p>Click a caption on the video to fix it, pick a look, then export your video or caption file.</p></div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="center">
+      <span class="kicker">Features</span>
+      <h2>Small app. <span class="grad">Big captions.</span></h2>
+    </div>
+    <div class="grid">
+      <article class="feat"><div class="ico" style="--c:#34c759" aria-hidden="true">🔒</div><h3>Private</h3><p>Everything runs on your Mac. Your videos are never uploaded.</p></article>
+      <article class="feat"><div class="ico" style="--c:#0a84ff" aria-hidden="true">⏱️</div><h3>In sync</h3><p>Every track shares the same timings. If captions feel early or late, Sync nudges them all by 0.05 s.</p></article>
+      <article class="feat"><div class="ico" style="--c:#ff9f0a" aria-hidden="true">✏️</div><h3>Edit on the video</h3><p>Click a caption on the video to fix a word. Drag to move the captions. Undo anything.</p></article>
+      <article class="feat"><div class="ico" style="--c:#e63ca0" aria-hidden="true">🎨</div><h3>Caption looks</h3><p>Clean, Bold Pop, Karaoke, Boxed, Minimal and Typewriter, with your own font, size and colour.</p></article>
+      <article class="feat"><div class="ico" style="--c:#5828dc" aria-hidden="true">🗣️</div><h3>Made for Hinglish</h3><p>Hindi in Devanagari, the same words in English letters, or both. The optional Apex model is tuned for Hindi to Hinglish.</p></article>
+      <article class="feat"><div class="ico" style="--c:#ff453a" aria-hidden="true">📤</div><h3>Share anywhere</h3><p>Export a video with captions burned in for Reels, Shorts and Instagram, or save SRT, VTT, TXT or JSON.</p></article>
+    </div>
+    <p class="small center">Want more languages? Download the optional Whisper model (about 99 languages) inside the app. Models download only when you ask.</p>
+  </div>
+</section>
+
+<section id="open-source" class="alt">
+  <div class="wrap">
+    <div class="os">
+      <span class="kicker">Open source</span>
+      <h2>Free. Open. <span class="grad">Yours to read.</span></h2>
+      <p class="lead" style="margin:18px auto 0">Subly is open source under the MIT licence. Read the code, report issues, contribute.</p>
+      <div class="cta">
+        <a class="btn btn-alt" href="https://github.com/DhananjayBhosale/Subly">Read the code</a>
+        <a class="btn btn-alt" href="https://github.com/DhananjayBhosale/Subly/issues">Report an issue</a>
+      </div>
+      <code class="code"><span>$ </span>git clone https://github.com/DhananjayBhosale/Subly.git</code>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="center">
+      <span class="kicker">Install</span>
+      <h2>Install in four steps.</h2>
+    </div>
+    <div class="install">
+      <ol class="ol">
+        <li><div><b>Download Subly.dmg</b>, open it and drag Subly to Applications.</div></li>
+        <li><div><b>Open Subly.</b> macOS says it can’t check the app. Click <b>Done</b>.</div></li>
+        <li><div>Open <b>System Settings › Privacy &amp; Security</b> and scroll down.</div></li>
+        <li><div>Click <b>Open Anyway</b> next to Subly. You only do this once.</div></li>
+      </ol>
+      <div class="why">
+        <h3>Why the extra step?</h3>
+        <p>Subly isn’t notarized by Apple yet, so macOS can’t check it the first time you open it. It’s a one-time step, and all of Subly’s code is public on GitHub for anyone to read.</p>
+        <ul class="req" aria-label="Requirements">
+          <li>Apple Silicon Mac</li><li>macOS 26 or later</li><li>About 3 MB</li>
+        </ul>
+        <div class="dlgroup" style="align-items:flex-start">
+          <a class="btn btn-main" href="https://github.com/DhananjayBhosale/Subly/releases/latest/download/Subly.dmg"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dl"/></svg>Download for Mac</a>
+          <p class="under"><a href="https://github.com/DhananjayBhosale/Subly/releases">All releases</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="faq">
+  <div class="wrap">
+    <div class="center">
+      <span class="kicker">FAQ</span>
+      <h2>Questions, answered.</h2>
+    </div>
+    <div class="faq">
+      <details><summary>Is it free?</summary><p>Yes. Subly is free and open source under the MIT licence. Download it, use it, share it.</p></details>
+      <details><summary>Does it upload my videos?</summary><p>No. Subly listens, writes and translates on your Mac, so your videos never leave it. The optional speech models download inside the app, and only when you ask.</p></details>
+      <details><summary>Which languages does it support?</summary><p>Subly detects the spoken language automatically and uses Apple’s built-in speech recognition out of the box. For more, download the optional Whisper model (about 99 languages) or Apex, which is tuned for Hindi to Hinglish. Translations use Apple’s on-device translation.</p></details>
+      <details><summary>Why does macOS show a security warning?</summary><p>Subly isn’t notarized by Apple yet, so macOS can’t check it the first time you open it. Click Done, then go to System Settings › Privacy &amp; Security, scroll down and click Open Anyway. You only need to do this once.</p></details>
+      <details><summary>What do I need?</summary><p>A Mac with Apple Silicon running macOS 26 or later.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="images/icon.png" alt="" width="26" height="26" loading="lazy">Subly</a>
+    <span>Made by <a href="https://github.com/DhananjayBhosale">Dhananjay Bhosale</a></span>
+    <span><a href="https://github.com/DhananjayBhosale/Subly/blob/main/LICENSE">MIT licence</a> · <a href="https://github.com/DhananjayBhosale/Subly">GitHub</a></span>
+  </div>
+</footer>
+</body>
+</html>

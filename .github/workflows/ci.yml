@@ -1,0 +1,85 @@
+# WHAT CI CAN AND CANNOT DO FOR THIS PROJECT
+#
+# Subly cannot be compiled on a GitHub runner. Package.swift declares
+# `platforms: [.macOS("26.0")]`, so SwiftPM refuses to load the manifest on
+# anything older — the job would fail before building a single file. Even on a
+# macOS 26 runner it would not get far: SublyEngine, SublyTranslate and SublyApp
+# import Speech, Translation and FoundationModels, and the speech and
+# translation models those need are downloaded by macOS on demand and are not
+# present on a CI machine.
+#
+# Shipping a workflow that always fails is worse than shipping none, so this one
+# does not pretend to build. It checks the things that can be checked anywhere,
+# and the first of them is the architectural invariant the whole test strategy
+# rests on: SublyCaptions imports Foundation and nothing else. That is why 123 of
+# the tests can exist at all. If someone imports Speech or SwiftUI into the
+# caption core, the core stops being testable and nobody notices until much
+# later — so it is worth a job.
+#
+# Compiling, `swift test`, the headless harnesses and the real-footage scripts
+# must be run by hand on an Apple Silicon Mac running macOS 26. CONTRIBUTING.md
+# says how. Please paste that output into your pull request.
+#
+# Do not "fix" this by adding `swift build`. It will fail, and the failure will
+# be about the runner, not your change.
+
+name: Checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The caption core depends on Foundation only
+        run: |
+          # SublyCaptions must stay free of Apple frameworks. It is what makes
+          # the deterministic core testable without a Mac, a model or a licence.
+          bad=$(grep -rhn '^import ' Sources/SublyCaptions/*.swift \
+                | awk '{print $2}' | sort -u | grep -v '^Foundation$' || true)
+          if [ -n "$bad" ]; then
+            echo "SublyCaptions must import only Foundation. Found:"
+            echo "$bad"
+            echo
+            echo "Move framework-dependent code to SublyEngine. If you need the"
+            echo "pure part tested, extract it — Sources/SublyCaptions/CueTiming.swift"
+            echo "is the worked example."
+            exit 1
+          fi
+          echo "OK: Foundation only"
+
+      - name: No absolute home paths in scripts
+        run: |
+          # These break for every contributor. Derive the repo root from $0.
+          if grep -rn '/Users/[a-z]' Scripts/ 2>/dev/null; then
+            echo "Scripts must not hardcode a home directory."
+            exit 1
+          fi
+          echo "OK: no hardcoded paths"
+
+      - name: Scripts are executable and valid shell
+        run: |
+          fail=0
+          for f in Scripts/*.sh; do
+            [ -x "$f" ] || { echo "not executable: $f"; fail=1; }
+            bash -n "$f" || { echo "syntax error: $f"; fail=1; }
+          done
+          exit $fail
+
+      - name: Colours go through the palette
+        run: |
+          # Every colour must be an appearance-aware pair in DesignSystem.swift,
+          # so light and dark both clear 4.5:1. A raw SwiftUI colour bypasses that.
+          raw=$(grep -rn '\.\(orange\|green\|yellow\|pink\|indigo\|teal\|mint\|brown\)\b' \
+                Sources/SublyApp/*.swift | grep -v '^\s*//' || true)
+          if [ -n "$raw" ]; then
+            echo "Use Palette/TrackPalette, not raw SwiftUI colours:"
+            echo "$raw"
+            exit 1
+          fi
+          echo "OK: palette only"
