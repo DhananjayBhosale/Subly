@@ -32,7 +32,7 @@ whisper.cpp into `vendor/` (also ignored), and checks out the version pinned in 
 script. Without it the app still works with Apple's engines. The optional Whisper and
 Apex models will not run.
 
-`swift test` currently runs 182 tests: 123 in `SublyCaptionsTests` and 59 in
+`swift test` currently runs 190 tests: 131 in `SublyCaptionsTests` and 59 in
 `SublyEngineTests`.
 
 `./Scripts/run.sh` builds and opens the app.
@@ -83,6 +83,7 @@ Results are written to stderr with a prefix (`GEN:`, `ENGINE:`, `STORAGE:`, `OUT
 | `SUBLY_LAYOUT_SHOTS` | output directory | With the layout check, writes a PNG per route per width. Layout only: it does not composite system materials, so bars and panels can look white in Dark Mode. |
 | `SUBLY_LAYOUT_ROUTE` | `empty`, `home`, `new`, or `editor` (default `editor`) | Which step the layout check sweeps. `empty` skips loading a project. |
 | `SUBLY_EDIT_CHECK` | `file\|lang\|outputs` | Runs real generation, then asserts the editing rules: identical cue counts and timings across tracks, edit isolation, undo, reflow, and export. |
+| `SUBLY_SPELLING_CHECK` | `file\|lang\|outputs\|heard\|preferred` | Makes captions, changes one word as a person would, and checks the spelling is learned, offered for the rest of the track, and used when the captions are made again. Learning is never saved in a test run. With `SUBLY_SPELLING_UNDO`, checks that Undo un-teaches it instead; `SUBLY_SPELLING_PAUSE` (seconds) holds the banner for a screenshot. |
 | `SUBLY_OVERLAY_EDIT_CHECK` | `file\|lang\|outputs` | Edits a caption the way clicking it on the video does, and confirms the new words reach the export. |
 | `SUBLY_GENERATE` | `file\|lang\|outputs\|target[\|names]` | End-to-end generation, including translation (which needs a UI-attached session). `target` defaults to `en`; `names` is a comma-separated list for "Names and brands". Example: `fixtures/hi_video.mp4\|hi-IN\|original,romanized\|en`. |
 | `SUBLY_ENGINE_CHECK` | language code, for example `hi-IN` | Lists the engine menu for that language and selects each entry, checking it reads back. Restores the previous choice. |

@@ -1,6 +1,6 @@
 # Known limits
 
-What Subly does not do yet, or does not do well. Plain and current as of version 1.1.
+What Subly does not do yet, or does not do well. Plain and current as of version 1.2.
 
 ## Installing
 
@@ -37,6 +37,10 @@ What Subly does not do yet, or does not do well. Plain and current as of version
 
 ## Editing
 
+- **Learned spellings are whole words in English letters.** Changing "yah" to "ye"
+  teaches Subly; rewording, grammar fixes and changes in a transcript or translation
+  don't (only a word's own capitals, like "iPhone", are learned there). Replace All does
+  not teach it either.
 - **No per-track caption length.** All tracks share one set of caption rules.
 - **Reference subtitles** load only when an `.srt` or `.vtt` with the same name sits
   next to the video.

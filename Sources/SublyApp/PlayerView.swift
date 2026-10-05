@@ -197,7 +197,8 @@ struct SubtitleOverlay: View {
                 }
                 // Not on a picture too narrow for it: squeezed, it wrapped to four lines
                 // and its first line was cut off.
-                if !tipDismissed, !active.isEmpty, !model.clock.isPlaying, editing == nil, rect.width >= 300 {
+                if !tipDismissed, !active.isEmpty, !model.clock.isPlaying, editing == nil, rect.width >= 300,
+                   model.spellingNote == nil {
                     HStack(spacing: 8) {
                         Image(systemName: "hand.point.up.left")
                         Text("Click a caption to fix a word. Drag it to move all captions.")

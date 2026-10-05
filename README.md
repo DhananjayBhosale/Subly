@@ -7,7 +7,7 @@
 **Captions for your videos, made right on your Mac.**<br>
 The words you said, the same words in English letters, and a translation — all perfectly in sync.
 
-[![Download for Mac](https://img.shields.io/badge/Download_for_Mac-Subly_1.1-0A84FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/DhananjayBhosale/Subly/releases/latest)
+[![Download for Mac](https://img.shields.io/badge/Download_for_Mac-Subly_1.2-0A84FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/DhananjayBhosale/Subly/releases/latest)
 [![Website](https://img.shields.io/badge/Website-subly.dhananjaytech.app-E63CA0?style=for-the-badge)](https://subly.dhananjaytech.app)
 
 ![macOS 26+](https://img.shields.io/badge/macOS-26%2B-111?logo=apple) ![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-M1_and_later-111) ![On-device](https://img.shields.io/badge/100%25-on--device-34C759) ![MIT licence](https://img.shields.io/badge/licence-MIT-lightgrey)
@@ -47,6 +47,7 @@ Then burn them into the video, Reels-style:
 - **🔒 Private by design.** Speech and translation run on your Mac. Nothing is uploaded.
 - **🎯 In sync.** Long videos are cut at pauses and keep real word timings. Still a hair off? **Sync** nudges every caption 0.05 s earlier or later.
 - **✋ Edit on the video.** Click a caption to fix a word, click away to save. Drag it to move all captions up or down.
+- **🧠 Learns your spelling.** Change "yah" to "ye" once and Subly writes "ye" in every new caption. See or forget what it learned in Settings › Languages.
 - **🎨 Caption looks.** Clean, Bold Pop, Karaoke, Boxed, Minimal and Typewriter, with your own size, font, colour and position.
 - **🇮🇳 Made for Hinglish.** The optional Apex model writes Hindi straight into English letters. Add names and brands ("iPhone", "Fitbit Air") so they're spelled right.
 - **📤 Share anywhere.** A video with captions burned in for Instagram, Reels and Shorts, or SRT, VTT, TXT and JSON files for YouTube and editors.
@@ -86,7 +87,7 @@ cd Subly
 - Skip `build_engine.sh` and the app still works with Apple's speech engines. Only the
   optional models need the whisper.cpp runtime, which is not in git.
 
-See `CONTRIBUTING.md` for tests and the headless check harnesses. `swift test` runs 182 tests.
+See `CONTRIBUTING.md` for tests and the headless check harnesses. `swift test` runs 190 tests.
 
 </details>
 

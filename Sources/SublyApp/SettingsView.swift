@@ -81,8 +81,55 @@ private struct LanguageSettings: View {
                           axis: .vertical)
                 .lineLimit(3...6)
             }
+            LearnedSpellingsSection()
         }
         .formStyle(.grouped)
+    }
+}
+
+/// The words Subly has learned to spell this person's way, from their corrections.
+private struct LearnedSpellingsSection: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        Section {
+            Toggle("Learn from my corrections", isOn: Binding(
+                get: { model.learnsSpellings }, set: { model.learnsSpellings = $0 }))
+            let rules = model.spellingPreferences.rules
+            if rules.isEmpty {
+                Text("When you change a word in a caption, for example “yah” to “ye”, Subly uses your spelling in new captions too.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                ForEach(rules.keys.sorted(), id: \.self) { tag in
+                    ForEach(rules[tag, default: [:]].sorted(by: { $0.key < $1.key }), id: \.key) { heard, preferred in
+                        HStack {
+                            Text("\(heard) → \(preferred)")
+                            Spacer()
+                            Text(Self.languageName(tag)).font(.caption).foregroundStyle(.secondary)
+                            Button {
+                                model.spellingPreferences.forget(heard: heard, languageTag: tag)
+                            } label: {
+                                Image(systemName: "minus.circle")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Forget this spelling")
+                            .accessibilityLabel("Forget \(heard) to \(preferred)")
+                        }
+                    }
+                }
+                Button("Forget All", role: .destructive) { model.spellingPreferences.forgetAll() }
+            }
+        } header: {
+            Text("Your spellings")
+        }
+    }
+
+    private static func languageName(_ tag: String) -> String {
+        if tag.hasSuffix("-Latn"), let base = tag.split(separator: "-").first {
+            let name = Locale.current.localizedString(forLanguageCode: String(base)) ?? String(base)
+            return base == "hi" ? "Hinglish" : "\(name) in English letters"
+        }
+        return Locale.current.localizedString(forIdentifier: tag) ?? tag
     }
 }
 

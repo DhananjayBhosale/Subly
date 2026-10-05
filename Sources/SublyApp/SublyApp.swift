@@ -357,6 +357,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Task { await Self.outputCheck(spec: spec) }
             }
         }
+        if let spec = ProcessInfo.processInfo.environment["SUBLY_SPELLING_CHECK"] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                Task { await Self.spellingCheck(spec: spec) }
+            }
+        }
         if let spec = ProcessInfo.processInfo.environment["SUBLY_OVERLAY_EDIT_CHECK"] {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
                 Task { await Self.overlayEditCheck(spec: spec) }
@@ -619,6 +624,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let got = model.project.tracks.contains { $0.kind == want && !$0.isReference }
         emit(got ? "PASS got \(want.rawValue) after one action" : "FAIL no \(want.rawValue)")
+        Self.terminateHeadless()
+    }
+
+    /// `SUBLY_SPELLING_CHECK="<file>|<lang>|<outputs>|<heard>|<preferred>"` — makes
+    /// captions, changes one word the way a person would, and checks the spelling is
+    /// learned, fixes the rest of the track, and is used when the captions are made again.
+    /// Learning is never saved in a test run.
+    static func spellingCheck(spec: String) async {
+        func emit(_ s: String) { FileHandle.standardError.write(Data(("SPELL: " + s + "\n").utf8)) }
+        let parts = spec.split(separator: "|").map(String.init)
+        guard parts.count >= 5, let model = Self.model else { emit("bad spec"); Self.terminateHeadless(); return }
+        let heard = parts[3], preferred = parts[4]
+        func waitForRun() async {
+            for _ in 0..<1200 {
+                if case .running = model.generation { try? await Task.sleep(for: .milliseconds(250)); continue }
+                break
+            }
+        }
+        func count(_ word: String) -> Int {
+            model.project.tracks.filter { !$0.isReference }.flatMap(\.cues).flatMap(\.lines)
+                .flatMap { $0.split(separator: " ") }
+                .filter { $0.trimmingCharacters(in: .punctuationCharacters).lowercased() == word.lowercased() }.count
+        }
+        await model.importMedia(URL(fileURLWithPath: parts[0]))
+        model.project.sourceLanguage = parts[1]
+        model.project.selectedOutputs = Set(parts[2].split(separator: ",").compactMap { OutputKind(rawValue: String($0)) })
+        model.generate()
+        await waitForRun()
+        emit("made: \(count(heard))× “\(heard)”, \(count(preferred))× “\(preferred)”")
+        guard let track = model.project.tracks.first(where: { t in !t.isReference && t.cues.contains { $0.lines.joined(separator: " ").lowercased().contains(heard.lowercased()) } }),
+              let cue = track.cues.first(where: { $0.lines.joined(separator: " ").lowercased().contains(heard.lowercased()) }) else {
+            emit("no caption contains “\(heard)”"); Self.terminateHeadless(); return
+        }
+        let edited = cue.lines.map { line in
+            line.split(separator: " ", omittingEmptySubsequences: false).map { w -> String in
+                let core = w.trimmingCharacters(in: .punctuationCharacters)
+                return core.lowercased() == heard.lowercased() ? w.replacingOccurrences(of: core, with: preferred) : String(w)
+            }.joined(separator: " ")
+        }
+        emit("edit: \(cue.lines.joined(separator: " / ")) → \(edited.joined(separator: " / "))")
+        model.updateCueText(trackID: track.id, cueID: cue.id, lines: edited)
+        // Undoing the edit must un-teach it.
+        if ProcessInfo.processInfo.environment["SUBLY_SPELLING_UNDO"] != nil {
+            let learned = model.spellingPreferences.rules(for: track.languageTag)
+            model.undo()
+            let after = model.spellingPreferences.rules(for: track.languageTag)
+            emit("learned \(learned); after undo \(after), banner \(model.spellingNote == nil ? "gone" : "still showing")")
+            emit(after.isEmpty && model.spellingNote == nil && !learned.isEmpty ? "PASS undo forgets the spelling" : "FAIL undo kept it")
+            Self.terminateHeadless(); return
+        }
+        // Lets a screenshot catch the banner before it is acted on.
+        if let pause = ProcessInfo.processInfo.environment["SUBLY_SPELLING_PAUSE"].flatMap(Double.init) {
+            try? await Task.sleep(for: .seconds(pause))
+        }
+        if let note = model.spellingNote {
+            emit("learned: \(note.corrections.map { "\($0.heard)→\($0.preferred)" }.joined(separator: ", ")); offers to fix \(note.moreInTrack) more")
+            model.fixLearnedSpellingsInTrack()
+        } else { emit("FAIL nothing learned") }
+        emit("after fixing: \(count(heard))× “\(heard)”, \(count(preferred))× “\(preferred)”")
+        model.redoTranscription()
+        await waitForRun()
+        let left = count(heard), now = count(preferred)
+        emit("made again: \(left)× “\(heard)”, \(now)× “\(preferred)”")
+        emit(left == 0 && now > 0 ? "PASS new captions use the learned spelling" : "FAIL new captions ignore it")
         Self.terminateHeadless()
     }
 

@@ -1379,7 +1379,8 @@ final class AppModel {
                     let before = self.project.hasGeneratedCaptions ? EditSnapshot(self.project, label: "Listen Again") : nil
                     self.project.spine = output.spine
                     self.project.slots = output.slots
-                    self.project.tracks = output.tracks + references
+                    self.project.tracks = self.withLearnedSpellings(output.tracks) + references
+                    self.spellingNote = nil
                     self.project.waveform = output.waveform
                     self.project.audioURL = output.audioURL
                     self.project.generationFailures = output.failures
@@ -1506,6 +1507,10 @@ final class AppModel {
     }
 
     func undo() {
+        // Undoing the edit that taught a spelling un-teaches it too.
+        if let note = spellingNote, note.undoDepth == undoStack.count {
+            spellingPreferences.setRules(note.previousRules, for: note.languageTag)
+        }
         guard let snapshot = undoStack.popLast(), snapshot.projectID == project.id else { return }
         abandonPendingRecut()      // a pending re-cut must not undo the undo
         cancelOutputWork()
@@ -1538,6 +1543,7 @@ final class AppModel {
         generateAfterDownloadProject = nil
         undoStack.removeAll(); redoStack.removeAll()
         lastUndoKey = nil
+        spellingNote = nil
         selectedCueSlot = nil
         draggingCue = nil
         abandonPendingRecut()
@@ -1566,10 +1572,90 @@ final class AppModel {
         guard let t = project.tracks.firstIndex(where: { $0.id == trackID }),
               let c = project.tracks[t].cues.firstIndex(where: { $0.id == cueID }) else { return }
         guard project.tracks[t].cues[c].lines != lines else { return }
+        let before = project.tracks[t].cues[c].lines.joined(separator: " ")
         pushUndo("Edit Caption")
         project.tracks[t].cues[c].lines = lines
         rebuildIndex(trackID: trackID)
         scheduleAutosave()
+        learnSpellings(from: before, to: lines.joined(separator: " "), in: project.tracks[t])
+    }
+
+    // MARK: - Learned spellings
+
+    /// Words this person spells their own way ("ye" for "yah"), learned from their
+    /// corrections and used on every caption made afterwards.
+    var spellingPreferences: SpellingPreferences = AppModel.loadSpellings() {
+        didSet {
+            // Whatever the banner said is out of date once the list changes.
+            spellingNote = nil
+            // Test and review runs never change what the person's own app has learned.
+            guard !Self.isHookRun, let data = try? JSONEncoder().encode(spellingPreferences) else { return }
+            UserDefaults.standard.set(data, forKey: "learnedSpellings")
+        }
+    }
+    var learnsSpellings: Bool = UserDefaults.standard.object(forKey: "learnsSpellings") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(learnsSpellings, forKey: "learnsSpellings") }
+    }
+
+    private static func loadSpellings() -> SpellingPreferences {
+        guard let data = UserDefaults.standard.data(forKey: "learnedSpellings"),
+              let prefs = try? JSONDecoder().decode(SpellingPreferences.self, from: data) else {
+            return SpellingPreferences()
+        }
+        return prefs
+    }
+
+    /// What was just learned, shown once under the video with a way to fix the rest of
+    /// this video or to take it back.
+    struct SpellingNote: Equatable {
+        var trackID: UUID
+        var languageTag: String
+        var corrections: [SpellingPreferences.Correction]
+        var moreInTrack: Int
+        /// What was learned for the language before, so Don't Learn and Undo put back
+        /// an older preference instead of deleting it.
+        var previousRules: [String: String]
+        /// The undo step of the edit that taught it.
+        var undoDepth: Int
+    }
+    var spellingNote: SpellingNote?
+
+    private func learnSpellings(from old: String, to new: String, in track: SubtitleTrack) {
+        guard learnsSpellings, !track.isReference else { return }
+        // Respellings are learned only in English letters, where one word really has
+        // many spellings; in a transcript or translation another word is another meaning.
+        let found = SpellingPreferences.corrections(from: old, to: new,
+                                                    respellings: track.kind == .romanized)
+        guard !found.isEmpty else { return }
+        let previous = spellingPreferences.rules(for: track.languageTag)
+        spellingPreferences.learn(found, languageTag: track.languageTag)
+        spellingNote = SpellingNote(trackID: track.id, languageTag: track.languageTag, corrections: found,
+                                    moreInTrack: spellingPreferences.changes(in: track),
+                                    previousRules: previous, undoDepth: undoStack.count)
+    }
+
+    /// The learned spellings applied to the rest of the track the note is about.
+    func fixLearnedSpellingsInTrack() {
+        guard let note = spellingNote,
+              let t = project.tracks.firstIndex(where: { $0.id == note.trackID }) else { return }
+        spellingNote = nil
+        guard spellingPreferences.changes(in: project.tracks[t]) > 0 else { return }
+        pushUndo("Fix Spellings")
+        project.tracks[t] = spellingPreferences.apply(to: project.tracks[t])
+        rebuildIndex(trackID: note.trackID)
+        scheduleAutosave()
+    }
+
+    /// "Don't learn": the edit stays, and what was learned before it comes back.
+    func forgetSpellingNote() {
+        guard let note = spellingNote else { return }
+        spellingPreferences.setRules(note.previousRules, for: note.languageTag)
+    }
+
+    /// New captions in the person's own spelling.
+    func withLearnedSpellings(_ tracks: [SubtitleTrack]) -> [SubtitleTrack] {
+        guard learnsSpellings, !spellingPreferences.isEmpty else { return tracks }
+        return tracks.map { spellingPreferences.apply(to: $0) }
     }
 
     /// Timing is shared, so a timing change applies across every track.
@@ -1636,6 +1722,7 @@ final class AppModel {
         pushUndo("Remove Captions")
         project.tracks.removeAll { $0.id == id }
         project.visibleTrackIDs.remove(id)
+        if spellingNote?.trackID == id { spellingNote = nil }
         if focusedTrackID == id { focusedTrackID = project.tracks.first?.id }
         rebuildIndex()
         scheduleAutosave()
@@ -1819,7 +1906,8 @@ final class AppModel {
                 if let before = self.pendingRecutSnapshot { self.commitUndo(before) }
                 self.project.rules = rules
                 self.project.slots = output.slots
-                self.project.tracks = tracks + references
+                self.project.tracks = self.withLearnedSpellings(tracks) + references
+                self.spellingNote = nil
                 self.project.captionsEdited = false
                 self.pendingRules = nil
                 self.pendingRecutSnapshot = nil
@@ -1947,12 +2035,13 @@ final class AppModel {
                     if kind == .translation { self.project.translationTarget = target }
                     let references = self.project.tracks.filter(\.isReference)
                     var generated = self.project.tracks.filter { !$0.isReference && $0.id != oldID }
-                    generated.append(finished)
+                    generated.append(contentsOf: self.withLearnedSpellings([finished]))
                     let order: [OutputKind] = [.translation, .romanized, .original]
                     generated.sort {
                         (order.firstIndex(of: $0.kind) ?? 9) < (order.firstIndex(of: $1.kind) ?? 9)
                     }
                     self.project.tracks = generated + references
+                    self.spellingNote = nil
                     if let oldID { self.project.visibleTrackIDs.remove(oldID) }
                     self.project.visibleTrackIDs.insert(finished.id)
                     self.project.selectedOutputs.insert(kind)

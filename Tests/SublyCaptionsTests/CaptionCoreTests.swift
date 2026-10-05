@@ -1426,4 +1426,110 @@ struct SplitAtWordTests {
         let lines = result.tracks[0].cues.map { $0.lines.joined(separator: " ") }
         #expect(lines == ["one two three four five six seven", "eight"])
     }
+
+    @Test("English letters with a respelled word are still split at the timing word")
+    func splitFollowsRespelledWords() throws {
+        let texts = ["yah", "phone", "bahut", "achchha", "hai", "aur", "camera", "bhi"]
+        var words = texts.prefix(7).enumerated().map { k, t in TimedWord(text: t, start: Double(k) * 0.15, end: Double(k) * 0.15 + 0.14) }
+        words.append(TimedWord(text: "bhi", start: 1.3, end: 2.6))
+        let slot = CueSlot(index: 0, start: 0, end: 2.6, wordRange: 0..<8, endsSentence: true)
+        let cue = Cue(slotIndex: 0, start: 0, end: 2.6, lines: ["ye phone bahut achha hai aur camera bhi"])
+        let track = SubtitleTrack(kind: .romanized, languageTag: "hi-Latn", displayName: "Hinglish", cues: [cue], engineID: "t")
+        let result = try CaptionEdits.split(slot: 0, at: 1.3, slots: [slot], tracks: [track], words: words)
+        #expect(result.tracks[0].cues.map { $0.lines.joined(separator: " ") }
+                == ["ye phone bahut achha hai aur camera", "bhi"])
+    }
+}
+
+@Suite("Learning how someone spells")
+struct SpellingPreferencesTests {
+    private func pairs(_ old: String, _ new: String) -> [String] {
+        SpellingPreferences.corrections(from: old, to: new).map { "\($0.heard)→\($0.preferred)" }
+    }
+
+    @Test("A one-word change is a spelling; rewording and case-only edits are not")
+    func findsSwaps() {
+        #expect(pairs("Yah iPhone ka display", "Ye iPhone ka display") == ["Yah→ye"])
+        #expect(pairs("yah bahut achchha hai,", "yeh bahut acha hai,") == ["yah→yeh", "achchha→acha"])
+        #expect(pairs("kaise ho", "kaise ho aap") == [])            // an added word
+        #expect(pairs("main ghar ja raha", "hum office ja raha") == [])  // a rewording
+        #expect(pairs("Yah achchha hai", "Ye achha hai") == ["Yah→ye", "achchha→achha"])
+        // A different word is an edit, not a spelling.
+        #expect(pairs("It is good", "It was good") == [])
+        #expect(pairs("good food", "great flavor") == [])
+        #expect(pairs("yah ka phone", "yah ki phone") == [])          // grammar, two letters
+        #expect(pairs("can't stop", "can’t stop") == [])             // punctuation inside
+        // A capital the sentence gave the word is not kept.
+        #expect(pairs("teh book", "The book") == ["teh→the"])
+        #expect(pairs("iphone ka camera", "iPhone ka camera") == ["iphone→iPhone"])
+        #expect(pairs("delhi mein", "Delhi mein") == [])             // case only
+        #expect(pairs("hai.", "hai!") == [])                         // punctuation only
+        #expect(pairs("ek do teen", "ek 2 teen") == [])              // a number is not a spelling
+    }
+
+    @Test("Learned words are used on new captions, keeping punctuation and sentence capitals")
+    func appliesWithCase() {
+        var prefs = SpellingPreferences()
+        prefs.learn(SpellingPreferences.corrections(from: "Yah achchha hai", to: "Ye achha hai"),
+                    languageTag: "hi-Latn")
+        #expect(prefs.apply(to: "yah display achchha hai, yah camera bhi.", languageTag: "hi-Latn")
+                == "ye display achha hai, ye camera bhi.")
+        #expect(prefs.apply(to: "Yah achchha.", languageTag: "hi-Latn") == "Ye achha.")
+        #expect(prefs.apply(to: "YAH", languageTag: "hi-Latn") == "YE")
+        // Another caption language is untouched, and so is a word that only contains it.
+        #expect(prefs.apply(to: "yah", languageTag: "hi") == "yah")
+        #expect(prefs.apply(to: "yahan", languageTag: "hi-Latn") == "yahan")
+    }
+
+    @Test("A spelling with its own capitals is kept as typed")
+    func keepsBrandCapitals() {
+        var prefs = SpellingPreferences()
+        prefs.learn([.init(heard: "iphone", preferred: "iPhone")], languageTag: "hi-Latn")
+        #expect(prefs.apply(to: "Iphone ka camera", languageTag: "hi-Latn") == "iPhone ka camera")
+    }
+
+    @Test("Only a word's own capitals are learned in a transcript or translation")
+    func capitalsOnlyOutsideEnglishLetters() {
+        #expect(SpellingPreferences.corrections(from: "yah phone", to: "ye phone", respellings: false).isEmpty)
+        #expect(SpellingPreferences.corrections(from: "naya iphone", to: "naya iPhone", respellings: false)
+                .map(\.preferred) == ["iPhone"])
+        // Japanese has no spaces: a changed sentence is one "word" and must not be learned.
+        #expect(SpellingPreferences.corrections(from: "明日は学校へ行く", to: "明日は会社へ行く").isEmpty)
+    }
+
+    @Test("A later spelling wins for every word that led to the old one")
+    func revisesChain() {
+        var prefs = SpellingPreferences()
+        prefs.learn([.init(heard: "yah", preferred: "ye")], languageTag: "hi-Latn")
+        prefs.learn([.init(heard: "ye", preferred: "yeh")], languageTag: "hi-Latn")
+        #expect(prefs.apply(to: "yah ye", languageTag: "hi-Latn") == "yeh yeh")
+        // Rules can be put back exactly, as Don't Learn and Undo do.
+        let before = prefs.rules(for: "hi-Latn")
+        prefs.learn([.init(heard: "yah", preferred: "ya")], languageTag: "hi-Latn")
+        prefs.setRules(before, for: "hi-Latn")
+        #expect(prefs.apply(to: "yah", languageTag: "hi-Latn") == "yeh")
+    }
+
+    @Test("Changing a word back forgets the earlier preference")
+    func undoesLoop() {
+        var prefs = SpellingPreferences()
+        prefs.learn([.init(heard: "yah", preferred: "ye")], languageTag: "hi-Latn")
+        prefs.learn([.init(heard: "ye", preferred: "yah")], languageTag: "hi-Latn")
+        #expect(prefs.apply(to: "yah ye", languageTag: "hi-Latn") == "yah yah")
+        #expect(prefs.rules["hi-Latn"]?["yah"] == nil)
+    }
+
+    @Test("Applies to a whole track and counts what it would change")
+    func trackLevel() {
+        var prefs = SpellingPreferences()
+        prefs.learn([.init(heard: "yah", preferred: "ye")], languageTag: "hi-Latn")
+        let track = SubtitleTrack(kind: .romanized, languageTag: "hi-Latn", displayName: "Hinglish",
+                                  cues: [Cue(slotIndex: 0, start: 0, end: 1, lines: ["yah achha", "hai"]),
+                                         Cue(slotIndex: 1, start: 1, end: 2, lines: ["Yah bhi"])],
+                                  engineID: "test")
+        #expect(prefs.changes(in: track) == 2)
+        let fixed = prefs.apply(to: track)
+        #expect(fixed.cues.map(\.lines) == [["ye achha", "hai"], ["Ye bhi"]])
+        #expect(prefs.changes(in: fixed) == 0)
+    }
 }

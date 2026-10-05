@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="${1:-release}"
 APP="$ROOT/build/Subly.app"
 BUNDLE_ID="com.subly.local"
-VERSION="1.1"
+VERSION="1.2"
 # The commit's date, so each release build is numbered higher than the last.
 BUILD="$(git -C "$ROOT" log -1 --format=%cd --date=format:%Y%m%d.%H%M 2>/dev/null || date +%Y%m%d.%H%M)"
 # Set SIGN_IDENTITY to a "Developer ID Application: …" certificate for a release that

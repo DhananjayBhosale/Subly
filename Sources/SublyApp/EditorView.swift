@@ -199,7 +199,38 @@ struct EditorView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .animation(Motion.standard, value: fraction)
+        } else if let note = model.spellingNote {
+            banner {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Image(systemName: "character.cursor.ibeam").foregroundStyle(.tint)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(Self.learnedText(note.corrections)).font(.callout.weight(.semibold))
+                        Text("Subly will spell it your way in new captions.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    if note.moreInTrack > 0 {
+                        Button("Fix \(note.moreInTrack) More") { model.fixLearnedSpellingsInTrack() }
+                            .controlSize(.small)
+                    }
+                    Button("Don't Learn") { model.forgetSpellingNote() }.controlSize(.small)
+                    Button {
+                        model.spellingNote = nil
+                    } label: {
+                        Image(systemName: "xmark").font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Close")
+                    .accessibilityLabel("Close")
+                }
+            }
+            .transition(.opacity)
         }
+    }
+
+    private static func learnedText(_ corrections: [SpellingPreferences.Correction]) -> String {
+        let pairs = corrections.prefix(2).map { "“\($0.heard)” → “\($0.preferred)”" }.joined(separator: ", ")
+        return "Learned " + pairs + (corrections.count > 2 ? " and \(corrections.count - 2) more" : "")
     }
 
     private func banner<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {

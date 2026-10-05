@@ -115,7 +115,12 @@ public enum CaptionEdits {
             // word lands in the half where it isn't spoken. Edited text and
             // translations are divided in proportion to where the cut falls.
             var cut = min(units.count - 1, max(1, Int((Double(units.count) * fraction).rounded())))
-            if !spoken.isEmpty, spoken.joined(separator: joiner) == text, range.count >= 2 {
+            // A word respelled one for one ("yah" → "ye") still lines up with what was
+            // heard, so it is cut at the timing word too; reworded text and
+            // translations are not.
+            let sameWords = spoken.joined(separator: joiner) == text
+                || (!joiner.isEmpty && track.kind == .romanized && spoken.count == units.count)
+            if !spoken.isEmpty, sameWords, range.count >= 2 {
                 let before = spoken[..<(cutWord - range.lowerBound)]
                 let atUnit = joiner.isEmpty ? before.reduce(0) { $0 + $1.count } : before.count
                 cut = min(units.count - 1, max(1, atUnit))
