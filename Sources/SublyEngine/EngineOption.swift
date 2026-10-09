@@ -58,8 +58,12 @@ public struct EngineOption: Identifiable, Sendable, Equatable {
     /// existed, let alone what to change.
     public static func specialisedElsewhere(languageCode: String)
         -> [(pack: ExtendedEngineManager.ModelPack, languageCodes: [String])] {
+        // Only the models that write in English letters (Apex's Hinglish): that is
+        // what someone on a Latin-script language may be looking for. Listing every
+        // language model here — Mandarin, Swedish, Cantonese — buried the one row
+        // that mattered under a dozen that did not.
         ExtendedEngineManager.allPacks.compactMap { pack in
-            guard pack.id != ExtendedEngineManager.generalPack.id,
+            guard pack.id != ExtendedEngineManager.generalPack.id, pack.emitsRomanized,
                   !pack.serves(languageCode) else { return nil }
             return (pack, pack.languages)
         }

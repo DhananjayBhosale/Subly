@@ -106,20 +106,82 @@ struct ModelCatalogueTests {
             #expect(p.sha256.count == 64, "\(p.id) checksum looks wrong")
             #expect(p.downloadBytes > 0, "\(p.id) has no size")
             #expect(p.url.absoluteString.hasPrefix("https://"), "\(p.id) is not https")
-            #expect(!p.dtwPreset.isEmpty, "\(p.id) has no alignment preset")
+            if let preset = p.dtwPreset { #expect(!preset.isEmpty, "\(p.id) has an empty alignment preset") }
             #expect(p.approximateRAMBytes >= p.downloadBytes,
                     "\(p.id) claims to need less memory than its own file")
         }
     }
 
-    @Test("Hindi is recommended the specialised model, everything else the general one")
+    @Test("A specialised model is recommended only with evidence; otherwise the general one")
     func recommendations() {
         #expect(ExtendedEngineManager.recommended(for: "hi").pack.id == "hindi2hinglish-apex-q5")
-        for other in ["en", "es", "ja", "ar", "ru", "af", "ta"] {
-            let r = ExtendedEngineManager.recommended(for: other).pack
-            #expect(r.id == ExtendedEngineManager.generalPack.id,
-                    "\(other) recommended \(r.id)")
-            #expect(r.isGeneral)
+        for other in ["en", "es", "ja", "ar", "ru", "af", "ta", "sv", "de", "zh"] {
+            let r = ExtendedEngineManager.recommended(for: other)
+            let backed = all.first { $0.specialisedFor?.contains(other) == true && $0.evidence != nil }
+            #expect(r.pack.id == (backed ?? ExtendedEngineManager.generalPack).id,
+                    "\(other) recommended \(r.pack.id)")
+            #expect(!r.reason.isEmpty)
+        }
+    }
+
+    @Test("Every language is passed to whisper.cpp under a code it knows")
+    func whisperCodesAreKnown() {
+        // whisper-cli refuses a code outside its table; "fil" and "jv" used to be sent.
+        let known: Set<String> = ["en","zh","de","es","ru","ko","fr","ja","pt","tr","pl","ca","nl","ar",
+            "sv","it","id","hi","fi","vi","he","uk","el","ms","cs","ro","da","hu","ta","no","th","ur","hr",
+            "bg","lt","la","mi","ml","cy","sk","te","fa","lv","bn","sr","az","sl","kn","et","mk","br","eu",
+            "is","hy","ne","mn","bs","kk","sq","sw","gl","mr","pa","si","km","sn","yo","so","af","oc","ka",
+            "be","tg","sd","gu","am","yi","lo","uz","fo","ht","ps","tk","nn","mt","sa","lb","my","bo","tl",
+            "mg","as","tt","haw","ln","ha","ba","jw","su","yue"]
+        let general = ExtendedEngineManager.generalPack
+        for code in ExtendedEngineManager.additionalLanguages {
+            let sent = ExtendedEngineManager.whisperCode(for: code, pack: general)
+            #expect(known.contains(sent), "\(code) is sent as \(sent)")
+        }
+        for pack in all where !pack.isGeneral {
+            for code in pack.specialisedFor ?? [] {
+                let sent = ExtendedEngineManager.whisperCode(for: code, pack: pack)
+                #expect(known.contains(sent), "\(pack.id) sends \(code) as \(sent)")
+            }
+        }
+        #expect(ExtendedEngineManager.whisperCode(for: "fil", pack: general) == "tl")
+        #expect(ExtendedEngineManager.whisperCode(for: "jv", pack: general) == "jw")
+        #expect(ExtendedEngineManager.whisperCode(for: "nb", pack: general) == "no")
+        // Cantonese has its own token only in large-v3's vocabulary.
+        #expect(ExtendedEngineManager.whisperCode(for: "yue", pack: general) == "yue")
+        #expect(ExtendedEngineManager.whisperCode(for: "yue", pack: ExtendedEngineManager.largeV3Pack) == "yue")
+        for small in [ExtendedEngineManager.mediumPack, ExtendedEngineManager.smallPack, ExtendedEngineManager.basePack] {
+            #expect(ExtendedEngineManager.whisperCode(for: "yue", pack: small) == "zh", "\(small.id) would translate Cantonese")
+        }
+    }
+
+    @Test("A model trained without timestamps still has word alignment")
+    func noTimestampModelsAlignWords() {
+        // With "-nt" the only word times are DTW's; without a preset there would be none.
+        for p in all where p.noTimestamps {
+            #expect(p.dtwPreset != nil, "\(p.id) runs with -nt and no alignment preset")
+        }
+    }
+
+    @Test("From English, only the Hinglish model is suggested from another language")
+    func elsewhereIsOnlyHinglish() {
+        let ids = EngineOption.specialisedElsewhere(languageCode: "en").map(\.pack.id)
+        #expect(ids == ["hindi2hinglish-apex-q5"], "got \(ids)")
+    }
+
+    @Test("Language packs say what they are, under which licence, and are told apart by name")
+    func languagePacksAreDescribed() {
+        #expect(Set(all.map(\.displayName)).count == all.count, "two packs share a name")
+        // Saved under the same name, installing one would make another look installed.
+        let saved = all.map { ExtendedEngineManager.shared.modelURL($0).lastPathComponent }
+        #expect(Set(saved).count == all.count, "two packs would be saved as the same file")
+        for p in ExtendedEngineManager.languagePacks {
+            #expect(p.identity?.isEmpty == false, "\(p.id) has no identity")
+            #expect(p.license?.isEmpty == false, "\(p.id) has no licence")
+            #expect(p.blurb?.isEmpty == false, "\(p.id) has no description")
+            #expect(p.url.host == "huggingface.co", "\(p.id) is not on Hugging Face")
+            #expect(p.url.lastPathComponent == p.filename, "\(p.id) URL and filename disagree")
+            #expect(p.specialisedFor?.isEmpty == false, "\(p.id) is for no language")
         }
     }
 
@@ -162,11 +224,16 @@ struct ModelCatalogueTests {
     @Test("Alignment presets match what whisper.cpp accepts")
     func dtwPresetsAreValid() {
         // A preset the runtime does not know means no word timings at all.
-        let valid: Set<String> = ["tiny", "base", "small", "small.en", "medium",
-                                  "large.v1", "large.v2", "large.v3", "large.v3.turbo"]
+        let valid: Set<String> = ["tiny", "tiny.en", "base", "base.en", "small", "small.en",
+                                  "medium", "medium.en", "large.v1", "large.v2", "large.v3",
+                                  "large.v3.turbo"]
         for p in all {
-            #expect(valid.contains(p.dtwPreset), "\(p.id) has preset \(p.dtwPreset)")
+            if let preset = p.dtwPreset {
+                #expect(valid.contains(preset), "\(p.id) has preset \(preset)")
+            }
         }
+        // The general packs always align words; only a model with no preset may go without.
+        for p in all where p.isGeneral { #expect(p.dtwPreset != nil, "\(p.id) lost its preset") }
     }
 }
 

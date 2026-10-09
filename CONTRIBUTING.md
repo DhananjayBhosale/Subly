@@ -32,7 +32,7 @@ whisper.cpp into `vendor/` (also ignored), and checks out the version pinned in 
 script. Without it the app still works with Apple's engines. The optional Whisper and
 Apex models will not run.
 
-`swift test` currently runs 190 tests: 131 in `SublyCaptionsTests` and 59 in
+`swift test` currently runs 204 tests: 140 in `SublyCaptionsTests` and 64 in
 `SublyEngineTests`.
 
 `./Scripts/run.sh` builds and opens the app.
@@ -103,12 +103,12 @@ Results are written to stderr with a prefix (`GEN:`, `ENGINE:`, `STORAGE:`, `OUT
 | `SUBLY_CAPTION_EDIT_CHECK` | project name | Splits a caption, merges it, undoes both, and checks every track still shares one set of timings. Prints `EDIT` lines. Use a test project: it saves. |
 | `SUBLY_DETECT_CHECK` | media file path | Imports the file and runs language detection. Prints a `DETECT` line. Saves nothing. |
 | `SUBLY_KEY_CHECK` | any value | Focuses a text field and sends Space, ← and "c" through the app, checking they edit the text instead of starting playback. Prints `KEY` lines. |
-| `SUBLY_VIDEO_EXPORT_CHECK` | output `.mp4` path | With `SUBLY_OPEN_RECENT`, exports the project as a video with burned-in captions, without a save panel. Prints a `VIDEO` line. |
-| `SUBLY_PREVIEW_TEMPLATE` | `clean`, `boldPop`, `karaoke`, `boxed`, `minimal`, `typewriter` | With `SUBLY_OPEN_RECENT`, shows the project in that caption style. Not saved. |
+| `SUBLY_VIDEO_EXPORT_CHECK` | output `.mp4` path | With `SUBLY_OPEN_RECENT`, exports the project as a video with burned-in captions, without a save panel. Prints `VIDEO` lines, including whether the bundled Instrument Serif font registered. |
+| `SUBLY_PREVIEW_TEMPLATE` | `clean`, `boldPop`, `karaoke`, `boxed`, `minimal`, `typewriter`, `gradientPop` | With `SUBLY_OPEN_RECENT`, shows the project in that caption style. Not saved. |
 | `SUBLY_SHOW_LIST_LATER` | any value | With `SUBLY_OPEN_RECENT`, switches the editor to the caption list a moment after it opens. |
 | `SUBLY_HOME_DURING_RUN` | any value | With `SUBLY_GENERATE`, goes back to the projects step while captions are being made, and reports the step after the run. |
 | `SUBLY_PANEL_TAB` | `captions`, `look` or `share` | With `SUBLY_OPEN_RECENT`, opens that tab of the editor panel. |
-| `SUBLY_SEEK` | seconds | With `SUBLY_OPEN_RECENT`, moves the playhead there, for capturing a caption on screen. |
+| `SUBLY_SEEK` | seconds | With `SUBLY_OPEN_RECENT` or `SUBLY_LAYOUT_CHECK`, moves the playhead there, for capturing a caption on screen. |
 | `SUBLY_MENU_CHECK` | any value | Prints every menu with its shortcut and whether it is enabled, and presses ⌘E to prove the command is live. |
 | `SUBLY_PREPARE_TIMEOUT` | seconds | Read in `SublyTranslate`, not the app delegate. Shortens the wait for Apple's translation download sheet from 600 s, for runs where nobody is there to accept it. |
 

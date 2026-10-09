@@ -14,6 +14,8 @@ guard args.count >= 2 else {
       subly-cli transcribe <media> <lang> [vocabulary, comma separated]
       subly-cli caps
       subly-cli assets <lang>\n  subly-cli engine <auto|apple|pack-id> <lang>
+      subly-cli pack-smoke <pack-id> <media> <lang>   (runs one downloaded model, whatever is chosen)
+      subly-cli pack-install <pack-id> | pack-delete <pack-id>   (language models only)
     outputs: comma list of translation,romanized,original (default: all available)
     """)
     exit(0)
@@ -131,6 +133,56 @@ case "transcribe":
     } catch {
         try? FileManager.default.removeItem(at: work)   // `fail` exits before `defer` runs
         fail("TRANSCRIPTION FAILED: \(error.localizedDescription)")
+    }
+
+case "pack-smoke":
+    // One model, run exactly as the app runs it — its language code, -nt, alignment
+    // preset — on a clip, without changing the saved engine choice. For checking a
+    // newly added language model once it has been downloaded in the app.
+    guard args.count >= 5 else { fail("usage: pack-smoke <pack-id> <media> <lang>") }
+    guard let pack = ExtendedEngineManager.allPacks.first(where: { $0.id == args[2] }) else {
+        fail("no pack \(args[2])")
+    }
+    guard ExtendedEngineManager.shared.isInstalled(pack) else {
+        fail("NOT INSTALLED: download \(pack.displayName) (\(pack.formattedSize)) in Subly › Speech Models first")
+    }
+    let media = URL(fileURLWithPath: args[3])
+    let work = FileManager.default.temporaryDirectory
+        .appendingPathComponent("subly-cli-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: work) }
+    do {
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        let audio = try await MediaService().extractAudio(from: media, to: work.appendingPathComponent("audio.caf"))
+        let started = Date()
+        let outcome = try await ExtendedEngineManager.shared.transcribe(audioURL: audio, language: args[4], pack: pack)
+        let words = outcome.spine.words
+        let ordered = zip(words, words.dropFirst()).allSatisfy { $0.end <= $1.start + 1e-9 && $0.start <= $0.end }
+        print("pack: \(pack.id)  words: \(words.count)  monotonic: \(ordered)  elapsed: \(String(format: "%.1f", Date().timeIntervalSince(started)))s")
+        print("text: " + words.map(\.text).joined(separator: " "))
+        print("times: " + words.map { String(format: "%.2f-%.2f", $0.start, $0.end) }.joined(separator: " "))
+    } catch {
+        try? FileManager.default.removeItem(at: work)
+        fail("SMOKE FAILED: \(error.localizedDescription)")
+    }
+
+case "pack-install", "pack-delete":
+    // The app's own downloader (size and SHA-256 checked) and remover, for testing the
+    // language models one at a time. Limited to language models, so a test run can
+    // never remove a general model someone uses.
+    guard args.count >= 3 else { fail("usage: \(command) <pack-id>") }
+    guard let pack = ExtendedEngineManager.languagePacks.first(where: { $0.id == args[2] }) else {
+        fail("\(args[2]) is not a language model")
+    }
+    do {
+        if command == "pack-install" {
+            try await ExtendedEngineManager.shared.install(pack)
+            print("installed \(pack.id) (\(pack.formattedSize)), checksum verified")
+        } else {
+            try ExtendedEngineManager.shared.delete(pack)
+            print("deleted \(pack.id)")
+        }
+    } catch {
+        fail("\(command.uppercased()) FAILED: \(error.localizedDescription)")
     }
 
 case "generate":

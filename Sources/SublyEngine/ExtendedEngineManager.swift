@@ -20,6 +20,7 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         /// The model's real identity, shown under the picker. Users comparing engines
         /// need to know exactly which weights are running.
         public var modelIdentity: String {
+            if let identity { return identity }
             switch id {
             case "whisper-large-v3-turbo-q5":  return "ggerganov/whisper.cpp · large-v3-turbo · q5_0"
             case "whisper-large-v3-q5":        return "ggerganov/whisper.cpp · large-v3 · q5_0"
@@ -35,8 +36,10 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         public var downloadBytes: Int64
         public var sha256: String
         public var url: URL
-        /// whisper.cpp alignment-head preset for word-level timestamps.
-        public var dtwPreset: String
+        /// whisper.cpp alignment-head preset for word-level timestamps. Nil for a model
+        /// with no preset (distilled models): words then take whisper's own token
+        /// times, which are coarser.
+        public var dtwPreset: String?
         /// True when the model emits Roman script directly from audio, so its output
         /// IS the romanized track and there is no native-script transcript from it.
         public var emitsRomanized: Bool
@@ -52,6 +55,31 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         /// Nil for a general model. Set when the model is trained for specific
         /// languages and should be recommended for them.
         public var specialisedFor: [String]?
+        /// Why this model beats the general one for its languages, with the source, in
+        /// plain words. A specialised model is recommended only when this is set:
+        /// being trained for a language is not by itself evidence of being better.
+        public var evidence: String? = nil
+        /// The code whisper.cpp should be given, when it differs from the app's. A
+        /// Cantonese fine-tune of large-v2 knows no "yue" token and is run as "zh".
+        public var whisperLanguage: [String: String]? = nil
+        /// Repository and quantisation, e.g. "KBLab/kb-whisper-large · q5_0". Packs
+        /// added from the language catalogue set it; the first six are named below.
+        public var identity: String? = nil
+        /// What the model is for, in words a non-technical person can act on.
+        public var blurb: String? = nil
+        /// The licence its weights are published under, as the publisher states it.
+        public var license: String? = nil
+        /// The name it is saved under on this Mac, when that must differ from the
+        /// download's. Many repositories call their file "ggml-model-q5_0.bin", and the
+        /// Swedish, Norwegian, French and Latvian ones are even the same size: saved
+        /// under that one name, installing one made the others look installed, and the
+        /// wrong model would have run.
+        public var localFilename: String? = nil
+        /// Trained with timestamps off. whisper.cpp asked to predict them makes such a
+        /// model lose a third or more of its accuracy (Hindi: 47.5% word errors against
+        /// 14.9%), so it runs with "-nt". Word times still come from DTW alignment,
+        /// which "-nt" leaves untouched — checked: identical per-word times on turbo.
+        public var noTimestamps: Bool = false
 
         public var isGeneral: Bool { specialisedFor == nil }
 
@@ -59,6 +87,7 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         /// screen, not in a tooltip: the names alone ("Whisper Medium") say nothing
         /// about which one to pick.
         public var bestFor: String {
+            if let blurb { return blurb }
             switch id {
             case "hindi2hinglish-apex-q5":    return "Hindi only. Writes Hindi in English letters (Hinglish)."
             case "whisper-large-v3-turbo-q5": return "Any language. The best balance of speed and accuracy."
@@ -178,25 +207,41 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         languages: ["hi"],
         approximateRAMBytes: 1_100_000_000,
         relativeSpeed: 6,
-        specialisedFor: ["hi"])
+        specialisedFor: ["hi"],
+        evidence: "Trained for this language and measurably better than the general model.")
 
     /// Everything on offer, best first. Order is the order the picker shows.
     public static let allPacks: [ModelPack] = [
         hinglishPack, generalPack, largeV3Pack, mediumPack, smallPack, basePack
-    ]
+    ] + languagePacks
 
     /// The model to suggest for a language, and why.
     ///
-    /// Deliberately short. A specialised model is only recommended where there is
-    /// measured evidence it beats the general one — today that is Hindi and Apex.
-    /// Inventing a per-language favourite without having tested it would be worse
-    /// than saying nothing.
+    /// A specialised model is recommended only where its `evidence` says why it beats
+    /// the general one, with the source — Apex for Hindi, and the language packs whose
+    /// makers or independent benchmarks publish the numbers. Being trained for a
+    /// language is not evidence by itself: inventing a per-language favourite would be
+    /// worse than saying nothing.
     public static func recommended(for languageCode: String)
         -> (pack: ModelPack, reason: String) {
-        if let special = allPacks.first(where: { $0.specialisedFor?.contains(languageCode) == true }) {
-            return (special, "Trained for this language and measurably better than the general model.")
+        if let special = allPacks.first(where: {
+            $0.specialisedFor?.contains(languageCode) == true && $0.evidence != nil
+        }) {
+            return (special, special.evidence ?? "")
         }
         return (generalPack, "Handles about 99 languages and is the best general choice.")
+    }
+
+    /// The code whisper.cpp knows a language by. Mostly the app's own, but Whisper
+    /// predates two of them — Filipino is "tl" and Javanese "jw" — and whisper-cli
+    /// refuses a code it does not know, so with "fil" or "jv" every Whisper model
+    /// failed for those languages. A pack can override this for its own vocabulary.
+    static func whisperCode(for code: String, pack: ModelPack) -> String {
+        if let own = pack.whisperLanguage?[code] { return own }
+        // Only large-v3's vocabulary (and turbo's, which shares it) has a Cantonese
+        // token; on Medium, Small or Base "-l yue" lands on <|translate|>.
+        if code == "yue", !(pack.dtwPreset?.hasPrefix("large.v3") ?? false) { return "zh" }
+        return ["fil": "tl", "jv": "jw", "nb": "no"][code] ?? code
     }
 
     /// Languages the Apple stack cannot transcribe on any Mac.
@@ -291,7 +336,7 @@ public final class ExtendedEngineManager: @unchecked Sendable {
     }
 
     public func modelURL(_ pack: ModelPack) -> URL {
-        supportDirectory.appendingPathComponent(pack.filename)
+        supportDirectory.appendingPathComponent(pack.localFilename ?? pack.filename)
     }
 
     // MARK: - Install state
@@ -477,16 +522,20 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         public var isRomanized: Bool
     }
 
+    /// - Parameter explicit: run this pack rather than the one the user's choice
+    ///   resolves to. Only the pack smoke test passes it, so it can try a model without
+    ///   touching the saved engine choice.
     public func transcribe(audioURL: URL,
                            language: String,
                            vocabulary: [String] = [],
+                           pack explicit: ModelPack? = nil,
                            progress: (@Sendable (TranscriptionService.Progress) -> Void)? = nil
     ) async throws -> Outcome {
         // Honour the user's explicit engine choice. `pack(for:)` picks the *best* pack
         // for a language, which for Hindi is always the Hinglish one — so choosing
         // Whisper in the picker routed correctly but then transcribed with Apex anyway,
         // and failed with Apex's "can't write native script" message.
-        guard let pack = Self.resolvePack(for: language) else {
+        guard let pack = explicit ?? Self.resolvePack(for: language) else {
             throw EngineError.notInstalled("the extra-language model")
         }
         guard isInstalled(pack) else { throw EngineError.notInstalled(pack.displayName) }
@@ -548,9 +597,10 @@ public final class ExtendedEngineManager: @unchecked Sendable {
         for (input, stem) in zip(inputs, stems) {
             arguments += ["-f", input.path, "-of", stem.path]
         }
+        arguments += ["-l", Self.whisperCode(for: code, pack: pack)]
+        if let preset = pack.dtwPreset { arguments += ["-dtw", preset] }
+        if pack.noTimestamps { arguments.append("-nt") }
         arguments += [
-            "-l", code,
-            "-dtw", pack.dtwPreset,
             "-ml", "1",              // one unit per segment, merged into words below
             // Split on WORD, not on token. `-ml 1` alone cuts at token boundaries,
             // which for Devanagari (and any multi-byte script) slices a UTF-8
@@ -957,7 +1007,13 @@ public final class ExtendedEngineManager: @unchecked Sendable {
                 if !trimmed.isEmpty { lastMessage = trimmed }
                 if let open = line.range(of: "reading audio data from '") {
                     let path = String(line[open.upperBound...].prefix { $0 != "'" })
-                    if let index = paths.firstIndex(of: path) { current = index }
+                    if let index = paths.firstIndex(of: path) {
+                        current = index
+                        // A model run with -nt prints no timestamps, so a new piece is
+                        // the only sign of progress it gives.
+                        let now = pieces[index].start
+                        if now > heard { heard = now; return now }
+                    }
                 }
                 return nil
             }

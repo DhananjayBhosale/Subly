@@ -148,6 +148,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     FileHandle.standardError.write(Data("VIDEO: no project\n".utf8)); Self.terminateHeadless(); return
                 }
                 let started = Date()
+                FileHandle.standardError.write(Data("VIDEO: look \(model.project.captionStyle.template.displayName), Instrument Serif registered: \(CaptionFonts.hasInstrumentSerif)\n".utf8))
                 let shown = model.tracksShownOnVideo.map(\.id)
                 let ids = shown.isEmpty ? model.project.tracks.filter { !$0.isReference }.map(\.id) : shown
                 model.runVideoExport(media: media, trackIDs: ids, to: URL(fileURLWithPath: out), reveal: false) { error in
@@ -406,6 +407,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     model.openProject(doc)
                     model.route = want == "new" ? .newProject
                                 : want == "home" ? .home : .editor
+                    // Reopening resets the playhead, so a caption to capture is sought here.
+                    if let t = ProcessInfo.processInfo.environment["SUBLY_SEEK"].flatMap(Double.init) {
+                        model.seek(to: t)
+                    }
                     RunLoop.main.run(until: Date().addingTimeInterval(1.5))
                 }
                 Self.reportLayouts()
@@ -985,6 +990,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 FileHandle.standardError.write(Data("SHOT \(url.lastPathComponent)\n".utf8))
             }
         }
+        // The Speech Models sheet is its own window, so draw that too — tall enough to
+        // show every section, since a bitmap of a scroll view holds only what is visible.
+        window.setFrame(NSRect(x: 30, y: 30, width: 1100, height: 2400), display: true)
+        model?.showModels = true
+        RunLoop.main.run(until: Date().addingTimeInterval(1.0))
+        if let sheet = window.attachedSheet {
+            sheet.setFrame(NSRect(x: sheet.frame.minX, y: 0, width: 760, height: 2300), display: true)
+            RunLoop.main.run(until: Date().addingTimeInterval(0.8))
+        }
+        if let sheet = window.attachedSheet, let view = sheet.contentView,
+           let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) {
+            view.cacheDisplay(in: view.bounds, to: rep)
+            if let png = rep.representation(using: .png, properties: [:]) {
+                let url = dir.appendingPathComponent("models-\(suffix).png")
+                try? png.write(to: url)
+                FileHandle.standardError.write(Data("SHOT \(url.lastPathComponent)\n".utf8))
+            }
+        }
+        model?.showModels = false
     }
 }
 

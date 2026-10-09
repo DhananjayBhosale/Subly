@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="${1:-release}"
 APP="$ROOT/build/Subly.app"
 BUNDLE_ID="com.subly.local"
-VERSION="1.2"
+VERSION="1.3"
 # The commit's date, so each release build is numbered higher than the last.
 BUILD="$(git -C "$ROOT" log -1 --format=%cd --date=format:%Y%m%d.%H%M 2>/dev/null || date +%Y%m%d.%H%M)"
 # Set SIGN_IDENTITY to a "Developer ID Application: …" certificate for a release that
@@ -99,6 +99,14 @@ if [ -f "$ROOT/Resources/engine/whisper-cli" ]; then
   echo "▸ Engine runtime bundled ($(du -sh "$ROOT/Resources/engine/whisper-cli" | awk '{print $1}'))"
 fi
 
+# Caption fonts. The app registers every font in Contents/Resources/Fonts for itself
+# the first time a caption uses one (CaptionFonts in CaptionStyleViews.swift).
+if compgen -G "$ROOT/Resources/Fonts/*.ttf" > /dev/null; then
+  mkdir -p "$APP/Contents/Resources/Fonts"
+  cp "$ROOT/Resources/Fonts/"*.ttf "$APP/Contents/Resources/Fonts/"
+  echo "▸ Caption fonts bundled ($(ls "$APP/Contents/Resources/Fonts" | wc -l | tr -d ' ') files)"
+fi
+
 # Licences for what ships inside the app, shown from Settings › About.
 {
   echo "Subly"; echo; cat "$ROOT/LICENSE"; echo; echo "----"; echo
@@ -116,6 +124,12 @@ fi
   echo "OpenAI Whisper"; echo; cat "$ROOT/Resources/Licenses/Whisper-MIT.txt"
   echo; echo "----"; echo
   echo "Apache License 2.0 (Whisper-Hindi2Hinglish-Apex)"; echo; cat "$ROOT/Resources/Licenses/Apache-2.0.txt"
+  if [ -d "$APP/Contents/Resources/Fonts" ]; then
+    echo; echo "----"; echo
+    echo "Instrument Serif, regular and italic (the caption font) — https://github.com/Instrument/instrument-serif"
+    echo "The Latin subset from the @fontsource/instrument-serif 5.3.0 package, converted from WOFF to TrueType."; echo
+    cat "$ROOT/Resources/Licenses/InstrumentSerif-OFL.txt"
+  fi
 } > "$APP/Contents/Resources/Acknowledgements.txt"
 
 if [ -f "$ROOT/Resources/AppIcon.icns" ]; then

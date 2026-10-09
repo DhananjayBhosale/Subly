@@ -1326,6 +1326,86 @@ struct CaptionStyleTests {
         #expect(CaptionStyle.preset(.karaoke).animation == .wordHighlight)
         #expect(CaptionStyle.preset(.boldPop).display("hello") == "HELLO")
     }
+
+    @Test("Gradient Pop is the website's headline: serif italic, filling with Subly's gradient")
+    func gradientPop() {
+        let style = CaptionStyle.preset(.gradientPop)
+        #expect(style.font == .instrumentSerif && style.italic)
+        #expect(style.animation == .wordFill && style.needsWordTimes)
+        #expect(style.textGradient == ["#AE92FF", "#FF70C9", "#FFAD62"])
+        #expect(style.background == .shadow)
+        #expect(!style.font.hasBold && CaptionStyle.Font.system.hasBold)
+        // Filling already marks the spoken word, so the highlight never doubles it.
+        var both = style
+        both.highlightsSpokenWord = true
+        #expect(!both.highlightsCurrentWord)
+    }
+
+    @Test("The looks that shipped before keep every new setting off")
+    func olderLooksUnchanged() {
+        for template in CaptionStyle.Template.allCases where template != .gradientPop {
+            let style = CaptionStyle.preset(template)
+            #expect(!style.italic && style.textGradient == nil && style.boxGradient == nil, "\(template)")
+            #expect(!style.highlightsSpokenWord && style.edgeColor == "#000000", "\(template)")
+        }
+        #expect(CaptionStyle.default == CaptionStyle.preset(.clean))
+        #expect(CaptionStyle.preset(.karaoke).highlightsCurrentWord)
+        #expect(!CaptionStyle.preset(.clean).highlightsCurrentWord && !CaptionStyle.preset(.clean).needsWordTimes)
+    }
+
+    @Test("The spoken-word highlight works on any look and asks for word times")
+    func highlightOnAnyLook() {
+        var style = CaptionStyle.preset(.boldPop)
+        style.highlightsSpokenWord = true
+        #expect(style.needsWordTimes && style.highlightsCurrentWord)
+        style.animation = .typewriter
+        #expect(style.highlightsCurrentWord)
+    }
+
+    @Test("Every ready-made gradient has at least two readable colours")
+    func gradientPresets() {
+        for preset in CaptionStyle.textGradients + CaptionStyle.boxGradients {
+            #expect(preset.colours.count >= 2, "\(preset.name)")
+            for hex in preset.colours {
+                let digits = hex.dropFirst()
+                #expect(hex.hasPrefix("#") && (digits.count == 6 || digits.count == 8)
+                        && UInt64(digits, radix: 16) != nil, "\(preset.name) \(hex)")
+            }
+        }
+        #expect(CaptionStyle.textGradients.first?.name == "Subly")
+        #expect(CaptionStyle.boxGradients.first?.name == "Subly")
+    }
+
+    @Test("A word fills evenly while it is said: empty before, full after")
+    func fillProgress() {
+        let word = CaptionAnimationTiming.Word(text: "sync", start: 1, end: 1.5)
+        #expect(CaptionAnimationTiming.fillProgress(word, elapsed: 0) == 0)
+        #expect(CaptionAnimationTiming.fillProgress(word, elapsed: 1) == 0)
+        #expect(abs(CaptionAnimationTiming.fillProgress(word, elapsed: 1.125) - 0.25) < 1e-9)
+        #expect(abs(CaptionAnimationTiming.fillProgress(word, elapsed: 1.25) - 0.5) < 1e-9)
+        #expect(CaptionAnimationTiming.fillProgress(word, elapsed: 1.5) == 1)
+        #expect(CaptionAnimationTiming.fillProgress(word, elapsed: 9) == 1)
+        // Never goes backwards.
+        let samples = stride(from: 0.0, through: 2, by: 0.01).map { CaptionAnimationTiming.fillProgress(word, elapsed: $0) }
+        #expect(zip(samples, samples.dropFirst()).allSatisfy { $0 <= $1 })
+        // A word with no length fills at once when it is reached.
+        let instant = CaptionAnimationTiming.Word(text: "a", start: 2, end: 2)
+        #expect(CaptionAnimationTiming.fillProgress(instant, elapsed: 1.99) == 0)
+        #expect(CaptionAnimationTiming.fillProgress(instant, elapsed: 2) == 1)
+    }
+
+    @Test("Words of a caption fill one after another, in reading order")
+    func fillAcrossCaption() {
+        let words = CaptionAnimationTiming.words(in: "stay in sync", start: 0, end: 1.2)
+        func fills(at t: Double) -> [Double] { words.map { CaptionAnimationTiming.fillProgress($0, elapsed: t) } }
+        #expect(fills(at: 0) == [0, 0, 0])
+        let early = fills(at: words[0].end / 2)
+        #expect(early[0] > 0 && early[0] < 1 && early[1] == 0 && early[2] == 0)
+        let middle = fills(at: (words[1].start + words[1].end) / 2)
+        #expect(middle[0] == 1 && abs(middle[1] - 0.5) < 1e-9 && middle[2] == 0)
+        #expect(fills(at: 1.2) == [1, 1, 1])
+        #expect(CaptionAnimationTiming.transform(.wordFill, elapsed: 0, duration: 1.2) == (1, 1, 0))
+    }
 }
 
 @Suite("Hinglish spelling")
@@ -1388,6 +1468,49 @@ struct LenientDecodingTests {
         #expect(style.background == CaptionStyle.preset(.clean).background)
         #expect(style.position == 0.3)
         #expect(style.size == 0.05)
+    }
+
+    @Test("Gradients, italics, the word highlight and edge colour survive a save")
+    func newStyleFieldsRoundTrip() throws {
+        var style = CaptionStyle.preset(.boxed)
+        style.font = .instrumentSerif
+        style.italic = true
+        style.textGradient = ["#FFD166", "#FF5E62"]
+        style.boxGradient = ["#5828DCE6", "#C42A85E6", "#C75A12E6"]
+        style.highlightsSpokenWord = true
+        style.edgeColor = "#3A1C71FF"
+        style.animation = .wordFill
+        let back = try JSONDecoder().decode(CaptionStyle.self, from: JSONEncoder().encode(style))
+        #expect(back == style)
+        let gradientPop = CaptionStyle.preset(.gradientPop)
+        #expect(try JSONDecoder().decode(CaptionStyle.self, from: JSONEncoder().encode(gradientPop)) == gradientPop)
+    }
+
+    @Test("A style saved before gradients and italics opens exactly as it looked")
+    func styleWithoutNewFields() throws {
+        // As saved by Subly 1.2: no italic, gradients, highlight or edge colour.
+        let json = ##"{"size":0.065,"highlightColor":"#FFD60A","animation":"pop","bold":true,"boxColor":"#000000CC","background":"outline","textColor":"#FFFFFF","position":0.14,"font":"condensed","uppercase":true,"template":"boldPop"}"##
+        let style = try JSONDecoder().decode(CaptionStyle.self, from: Data(json.utf8))
+        var expected = CaptionStyle.preset(.boldPop)
+        expected.position = 0.14
+        #expect(style == expected)
+        #expect(!style.italic && style.textGradient == nil && style.boxGradient == nil)
+        #expect(!style.highlightsSpokenWord && style.edgeColor == "#000000")
+    }
+
+    @Test("Broken new style fields fall back one by one")
+    func brokenNewFields() throws {
+        let json = ##"{"template":"gradientPop","font":"instrumentSerif","animation":"wordFill","italic":"yes","textGradient":["#FFFFFF"],"boxGradient":"#000000","highlightsSpokenWord":1,"edgeColor":7,"position":0.4}"##
+        let style = try JSONDecoder().decode(CaptionStyle.self, from: Data(json.utf8))
+        #expect(style.template == .gradientPop && style.font == .instrumentSerif && style.animation == .wordFill)
+        #expect(style.position == 0.4)
+        #expect(!style.italic)
+        #expect(style.textGradient == nil, "one colour is not a gradient")
+        #expect(style.boxGradient == nil)
+        #expect(!style.highlightsSpokenWord && style.edgeColor == "#000000")
+        // A look saved with nothing but its name opens as that look.
+        let future = ##"{"template":"gradientPop","font":"instrumentSerif","animation":"wordFill"}"##
+        #expect(try JSONDecoder().decode(CaptionStyle.self, from: Data(future.utf8)).template == .gradientPop)
     }
 
     @Test("A caption without the review fields still opens")

@@ -341,9 +341,9 @@ public actor CapabilityRegistry {
                 transcriptionTier: .available,
                 // Check the pack that would actually serve THIS language. Installing
                 // only the Hindi pack must not mark Tamil "Ready".
-                // Any general model will do; it need not be the default one.
+                // Any general model will do, or one made for this language.
                 assetState: ExtendedEngineManager.allPacks.contains {
-                    $0.isGeneral && ExtendedEngineManager.shared.isInstalled($0)
+                    $0.serves(code) && ExtendedEngineManager.shared.isInstalled($0)
                 } ? .installed : .downloadable,
                 translationTargets: translatable[code]?.targets ?? [],
                 translationNeedsDownload: translatable[code]?.needsDownload ?? [],

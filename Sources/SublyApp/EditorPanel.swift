@@ -284,11 +284,23 @@ private struct LookPane: View {
                 }
                 HStack(spacing: 16) {
                     Toggle("Bold", isOn: binding(\.bold))
+                        .disabled(!style.font.hasBold)
+                        .help(style.font.hasBold ? "Heavier letters" : "\(style.font.displayName) comes in one weight")
+                    Toggle("Italic", isOn: binding(\.italic))
                     Toggle("All capitals", isOn: binding(\.uppercase))
                 }
                 .toggleStyle(.checkbox)
-                ColourRow(title: "Colour", selection: colour(\.textColor))
-                if style.animation == .wordHighlight {
+                FillRows(title: "Colour", solid: colour(\.textColor), gradient: binding(\.textGradient),
+                         presets: CaptionStyle.textGradients, swatches: true)
+                if style.animation == .wordFill, style.textGradient != nil {
+                    ColourRow(title: "Before it's said", selection: colour(\.textColor))
+                        .help("Words still to be said show in this colour, faded")
+                }
+                if style.animation != .wordHighlight, style.animation != .wordFill {
+                    Toggle("Highlight the word being said", isOn: binding(\.highlightsSpokenWord))
+                        .toggleStyle(.checkbox)
+                }
+                if style.highlightsCurrentWord {
                     ColourRow(title: "Highlight", selection: colour(\.highlightColor))
                 }
             }
@@ -298,7 +310,12 @@ private struct LookPane: View {
                     ForEach(CaptionStyle.Background.allCases) { Text($0.displayName).tag($0) }
                 }
                 if style.background == .box {
-                    ColorPicker("Box colour", selection: colour(\.boxColor), supportsOpacity: true)
+                    FillRows(title: "Box colour", solid: colour(\.boxColor), gradient: binding(\.boxGradient),
+                             presets: CaptionStyle.boxGradients, swatches: false)
+                }
+                if style.background == .outline || style.background == .shadow {
+                    ColorPicker(style.background == .outline ? "Outline colour" : "Shadow colour",
+                                selection: colour(\.edgeColor), supportsOpacity: false)
                 }
                 Picker("Animation", selection: binding(\.animation)) {
                     ForEach(CaptionStyle.Animation.allCases) { Text($0.displayName).tag($0) }
@@ -401,6 +418,71 @@ private struct PositionButtons: View {
                 .help(name == "Bottom" ? "Low, but above where Reels and Shorts put their buttons" : "Put captions at the \(name.lowercased())")
                 .accessibilityAddTraits(isNear ? .isSelected : [])
             }
+        }
+    }
+}
+
+/// One colour or a gradient, for the text or the box: a few gradients one click away,
+/// then the start and end colours for anything else.
+private struct FillRows: View {
+    let title: String
+    @Binding var solid: Color
+    @Binding var gradient: [String]?
+    let presets: [CaptionStyle.GradientPreset]
+    /// The text has quick colour swatches; the box keeps its picker with opacity.
+    let swatches: Bool
+
+    private func stop(_ end: Bool) -> Binding<Color> {
+        Binding(get: { Color(hex: (end ? gradient?.last : gradient?.first) ?? "#FFFFFF") },
+                set: { colour in
+                    guard var stops = gradient, !stops.isEmpty else { return }
+                    stops[end ? stops.count - 1 : 0] = colour.hexString
+                    gradient = stops
+                })
+    }
+
+    var body: some View {
+        Picker(title, selection: Binding(get: { gradient != nil },
+                                         set: { gradient = $0 ? (gradient ?? presets.first?.colours) : nil })) {
+            Text("Solid").tag(false)
+            Text("Gradient").tag(true)
+        }
+        .pickerStyle(.segmented)
+        if let stops = gradient {
+            LabeledContent("Gradient") {
+                HStack(spacing: 6) {
+                    ForEach(presets) { preset in
+                        let isOn = stops == preset.colours
+                        Button { gradient = preset.colours } label: {
+                            Capsule()
+                                .fill(LinearGradient(colors: preset.colours.map(Color.init(hex:)),
+                                                     startPoint: .leading, endPoint: .trailing))
+                                .frame(width: 26, height: 16)
+                                .overlay { Capsule().strokeBorder(.separator, lineWidth: 0.5) }
+                                .padding(2)
+                                .overlay { Capsule().strokeBorder(isOn ? Color.accentColor : .clear, lineWidth: 2) }
+                        }
+                        .buttonStyle(.plain)
+                        .help(preset.name)
+                        .accessibilityLabel("\(preset.name) gradient")
+                        .accessibilityAddTraits(isOn ? .isSelected : [])
+                    }
+                }
+            }
+            LabeledContent("Start and end") {
+                HStack(spacing: 6) {
+                    ColorPicker("Start colour", selection: stop(false), supportsOpacity: !swatches)
+                    Image(systemName: "arrow.right")
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                    ColorPicker("End colour", selection: stop(true), supportsOpacity: !swatches)
+                }
+                .labelsHidden()
+            }
+        } else if swatches {
+            ColourRow(title: "Text colour", selection: $solid)
+        } else {
+            ColorPicker("Box colour", selection: $solid, supportsOpacity: true)
         }
     }
 }

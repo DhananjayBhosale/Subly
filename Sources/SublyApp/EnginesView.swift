@@ -12,14 +12,26 @@ struct EnginesView: View {
         model.extendedPacks.filter { model.installedPackIDs.contains($0.id) }
     }
     private var available: [ExtendedEngineManager.ModelPack] {
-        model.extendedPacks.filter { !model.installedPackIDs.contains($0.id) }
+        model.extendedPacks.filter { !model.installedPackIDs.contains($0.id) && $0.isGeneral }
     }
+    /// Not yet downloaded models trained for one language, grouped by that language
+    /// and sorted by its name, so forty models read as a list of languages.
+    private var byLanguage: [(code: String, name: String, packs: [ExtendedEngineManager.ModelPack])] {
+        var groups: [String: [ExtendedEngineManager.ModelPack]] = [:]
+        for pack in model.extendedPacks where !pack.isGeneral && !model.installedPackIDs.contains(pack.id) {
+            groups[pack.specialisedFor?.first ?? "", default: []].append(pack)
+        }
+        return groups.map { (code: $0.key, name: Self.languageName($0.key), packs: $0.value) }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+    @State private var expanded: Set<String> = []
 
     var body: some View {
         Form {
             appleSection
             installedSection
             availableSection
+            languageModelsSection
             languagesSection
         }
         .formStyle(.grouped)
@@ -76,6 +88,31 @@ struct EnginesView: View {
                 Text("Low on space, or an older Mac: \(ExtendedEngineManager.smallPack.displayName) (\(ExtendedEngineManager.smallPack.formattedSize)) is the smallest we suggest. Subly never downloads anything on its own.")
             }
         }
+    }
+
+    private var languageModelsSection: some View {
+        Section {
+            ForEach(byLanguage, id: \.code) { group in
+                DisclosureGroup(isExpanded: Binding(
+                    get: { expanded.contains(group.code) },
+                    set: { if $0 { expanded.insert(group.code) } else { expanded.remove(group.code) } })) {
+                    ForEach(group.packs, id: \.id) { PackRow(pack: $0) }
+                } label: {
+                    LabeledContent(group.name,
+                                   value: group.packs.count == 1 ? "1 model" : "\(group.packs.count) models")
+                }
+            }
+        } header: {
+            Text("Made for one language")
+                // The open project's language starts open; it can still be closed.
+                .onAppear { if let code = model.currentCapability?.languageCode { expanded.insert(code) } }
+        } footer: {
+            Text("Trained on one language, often by people who speak it. Each runs only for its own language. Subly recommends one over the general model only where there is published evidence it does better.")
+        }
+    }
+
+    static func languageName(_ code: String) -> String {
+        Locale.current.localizedString(forLanguageCode: code) ?? code
     }
 
     private var languagesSection: some View {
@@ -145,7 +182,12 @@ private struct PackRow: View {
                 }
             }
             Text(pack.bestFor)
-            Text(installed ? "On this Mac · \(pack.formattedSize)" : pack.costLine)
+            // Why it is worth picking over the general model, with who measured it.
+            if !pack.isGeneral, let evidence = pack.evidence {
+                Text(evidence).foregroundStyle(.secondary)
+            }
+            Text(installed ? "On this Mac · \(pack.formattedSize)"
+                 : [pack.costLine, pack.license].compactMap { $0 }.joined(separator: " · "))
         }
         .confirmationDialog("Remove \(pack.displayName)?", isPresented: $confirmRemove) {
             Button("Remove", role: .destructive) { model.deletePack(pack) }

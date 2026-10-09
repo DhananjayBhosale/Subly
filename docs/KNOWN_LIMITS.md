@@ -1,6 +1,6 @@
 # Known limits
 
-What Subly does not do yet, or does not do well. Plain and current as of version 1.2.
+What Subly does not do yet, or does not do well. Plain and current as of version 1.3.
 
 ## Installing
 
@@ -35,6 +35,13 @@ What Subly does not do yet, or does not do well. Plain and current as of version
   Apache-2.0; get written confirmation from its authors before commercial
   redistribution. See [MODEL_RESEARCH.md](MODEL_RESEARCH.md).
 
+- **Language models are checked, not measured.** Each of the 34 models made for one
+  language was downloaded and run once on synthetic speech before release (six only
+  checked to load, having no macOS voice). "Recommended" rests on the numbers its makers
+  or an independent benchmark published, not on tests of real creator videos.
+- **Chinese, Cantonese and Thai through Whisper** light up a phrase at a time, not each
+  word: those languages are written without spaces and whisper.cpp keeps the phrase whole.
+
 ## Editing
 
 - **Learned spellings are whole words in English letters.** Changing "yah" to "ye"
@@ -42,6 +49,8 @@ What Subly does not do yet, or does not do well. Plain and current as of version
   don't (only a word's own capitals, like "iPhone", are learned there). Replace All does
   not teach it either.
 - **No per-track caption length.** All tracks share one set of caption rules.
+- **Gradient Pop's font covers basic Latin only.** Accented letters used in Croatian,
+  Turkish, Latvian, Polish or Vietnamese fall back to another font inside the word.
 - **Reference subtitles** load only when an `.srt` or `.vtt` with the same name sits
   next to the video.
 - **Accessibility is incomplete.** VoiceOver labels exist for the main controls, but the

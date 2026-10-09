@@ -238,7 +238,7 @@ struct SubtitleOverlay: View {
                                     color: model.project.videoColor(for: item.track.id),
                                     style: previewStyle, fontSize: fontSize,
                                     elapsed: now - item.cue.start, duration: item.cue.duration,
-                                    words: style.animation.isPerWord ? model.wordTimes(track: item.track, cue: item.cue) : nil,
+                                    words: style.needsWordTimes ? model.wordTimes(track: item.track, cue: item.cue) : nil,
                                     showLabel: hovering && model.project.visibleTrackIDs.count > 1,
                                     isEditing: editing == item.cue.id,
                                     begin: {

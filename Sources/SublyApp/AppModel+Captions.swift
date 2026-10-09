@@ -171,8 +171,8 @@ extension AppModel {
 
     // MARK: Word timing for animated captions
 
-    /// When each word of `cue` is spoken, relative to its start, for Karaoke and
-    /// Typewriter. Taken from what the recogniser heard when the caption still has
+    /// When each word of `cue` is spoken, relative to its start, for Karaoke,
+    /// Typewriter, word fill and the spoken-word highlight. Taken from what the recogniser heard when the caption still has
     /// those words; guessed from word lengths when it was edited; nil for a
     /// translation, whose word order does not follow the speech.
     func wordTimes(track: SubtitleTrack, cue: Cue) -> [CaptionAnimationTiming.Word]? {
@@ -239,7 +239,7 @@ extension AppModel {
             .filter { trackIDs.contains($0.id) }
             .map { track in
                 track.cues.map { cue in
-                    CaptionVideoExporter.Item(cue: cue, words: style.animation.isPerWord ? wordTimes(track: track, cue: cue) : nil)
+                    CaptionVideoExporter.Item(cue: cue, words: style.needsWordTimes ? wordTimes(track: track, cue: cue) : nil)
                 }
             }
         let token = UUID()

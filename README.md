@@ -7,7 +7,7 @@
 **Captions for your videos, made right on your Mac.**<br>
 The words you said, the same words in English letters, and a translation — all perfectly in sync.
 
-[![Download for Mac](https://img.shields.io/badge/Download_for_Mac-Subly_1.2-0A84FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/DhananjayBhosale/Subly/releases/latest)
+[![Download for Mac](https://img.shields.io/badge/Download_for_Mac-Subly_1.3-0A84FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/DhananjayBhosale/Subly/releases/latest)
 [![Website](https://img.shields.io/badge/Website-subly.dhananjaytech.app-E63CA0?style=for-the-badge)](https://subly.dhananjaytech.app)
 
 ![macOS 26+](https://img.shields.io/badge/macOS-26%2B-111?logo=apple) ![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-M1_and_later-111) ![On-device](https://img.shields.io/badge/100%25-on--device-34C759) ![MIT licence](https://img.shields.io/badge/licence-MIT-lightgrey)
@@ -48,7 +48,7 @@ Then burn them into the video, Reels-style:
 - **🎯 In sync.** Long videos are cut at pauses and keep real word timings. Still a hair off? **Sync** nudges every caption 0.05 s earlier or later.
 - **✋ Edit on the video.** Click a caption to fix a word, click away to save. Drag it to move all captions up or down.
 - **🧠 Learns your spelling.** Change "yah" to "ye" once and Subly writes "ye" in every new caption. See or forget what it learned in Settings › Languages.
-- **🎨 Caption looks.** Clean, Bold Pop, Karaoke, Boxed, Minimal and Typewriter, with your own size, font, colour and position.
+- **🎨 Caption looks.** Clean, Bold Pop, Karaoke, Boxed, Minimal, Typewriter and Gradient Pop, where each word fills with colour as it's said. Then pick the size, font (Instrument Serif included), italics, a solid or gradient colour for the text and the box, a highlight for the spoken word, and where captions sit.
 - **🇮🇳 Made for Hinglish.** The optional Apex model writes Hindi straight into English letters. Add names and brands ("iPhone", "Fitbit Air") so they're spelled right.
 - **📤 Share anywhere.** A video with captions burned in for Instagram, Reels and Shorts, or SRT, VTT, TXT and JSON files for YouTube and editors.
 - **↩️ Undo everything.** Even Listen Again, which redoes the whole video.
@@ -63,7 +63,7 @@ You need an Apple Silicon Mac with **macOS 26** or later.
 
 ## 🧭 Good to know
 
-- **Speech models are optional downloads.** Apple's built-in speech works out of the box for many languages. Whisper (about 99 languages) and Apex (Hinglish) download inside the app, under Speech Models, only when you ask.
+- **Speech models are optional downloads.** Apple's built-in speech works out of the box for many languages. Whisper (about 99 languages), Apex (Hinglish) and 34 models made for one language download inside the app, under Speech Models, only when you ask.
 - **Translation needs the language pair in macOS.** The first time, macOS may ask to download it.
 - **Still young.** Accuracy on noisy, multi-speaker audio hasn't been measured, Japanese and Chinese romanization is basic, and the app isn't sandboxed. [`docs/KNOWN_LIMITS.md`](docs/KNOWN_LIMITS.md) lists the known gaps.
 
@@ -87,7 +87,7 @@ cd Subly
 - Skip `build_engine.sh` and the app still works with Apple's speech engines. Only the
   optional models need the whisper.cpp runtime, which is not in git.
 
-See `CONTRIBUTING.md` for tests and the headless check harnesses. `swift test` runs 190 tests.
+See `CONTRIBUTING.md` for tests and the headless check harnesses. `swift test` runs 204 tests.
 
 </details>
 
@@ -106,6 +106,24 @@ Speech recognition goes to Apple's engines (`SpeechTranscriber`, then `Dictation
 | Whisper Base | base, q5_1 | 60 MB | 0.2 GB | Only for very tight machines. Makes frequent mistakes. |
 
 Apex was compared with the other engines on one 58-second Hinglish clip (`docs/ENGINE_COMPARISON.md`) and on one synthetic clip. That is not a benchmark.
+
+**Made for one language.** Fine-tunes of Whisper published by people who work on each language, run by the same whisper.cpp. Subly recommends one over general Whisper only where its makers or an independent benchmark publish numbers showing it does better (★); the evidence is shown beside it in the app. Before release each was downloaded, checksum-checked and run on a sentence spoken by the macOS voice for its language (Latvian, Persian, Estonian, Azerbaijani, Icelandic and Uzbek have no macOS voice, so those were only checked to load and run); none has been measured on real creator videos.
+
+| Language | Models |
+|---|---|
+| Chinese | Belle Mandarin ★, Belle Mandarin Large, Breeze Taiwan (Traditional, Mandarin–English mixing) |
+| Cantonese | Whisper Cantonese ★ |
+| English | Whisper Medium / Small / Base English |
+| Swedish | KB-Whisper Swedish ★, Medium, Small |
+| Norwegian | NB-Whisper Norwegian ★, Medium |
+| Finnish | Whisper Finnish ★, Whisper Finnish Turbo |
+| German · Russian · Croatian | Whisper German ★ · Whisper Russian ★ · Whisper Croatian ★ |
+| Thai | Pathumma Thai ★, Thonburian Thai |
+| Vietnamese | PhoWhisper Vietnamese ★, PhoWhisper Vietnamese Small |
+| Hebrew | ivrit.ai Hebrew ★ |
+| Also | French, Turkish, Latvian, Estonian, Icelandic, Korean, Arabic dialects, Persian, Azerbaijani, Uzbek, Bengali, Tamil |
+
+How each was chosen, the numbers, and what was left out and why: `docs/MODEL_RESEARCH.md`.
 
 </details>
 
@@ -136,5 +154,7 @@ Subly is released under the MIT licence. See `LICENSE`. It uses, and does not cl
 - OpenAI Whisper, the speech recognition models (MIT)
 - ggml-org/whisper.cpp, the runtime, v1.9.4, and the GGML model conversions hosted in its Hugging Face repository (MIT)
 - Oriserve's Whisper-Hindi2Hinglish-Apex, as a GGML conversion hosted by Marquestra (Apache-2.0, as stated on the model page)
+- The language models, each by its publisher under its own licence (Apache-2.0, MIT, BSD-3-Clause or CC-BY-4.0), named with its licence in the app: BELLE-2, MediaTek Research, alvanlii, KBLab (National Library of Sweden), the National Library of Norway, primeline, bond005, GoranS, bofenghuang, AiLab IMCS UL, Finnish-NLP, mozilla-ai, TurkMedSTT, NECTEC, biodatlab, VinAI Research, ivrit.ai, oddadmix, SadeghK, tugstugi, vasista22 (IIT Madras), TalTechNLP, LocalDoc, Reykjavik University's Language and Voice Lab (CC-BY-4.0), rubaiSTT and royshilkrot; GGML conversions by their authors or the converters named in the app
+- Instrument Serif by the Instrument Serif Project Authors, the caption font, bundled in the app (SIL Open Font License 1.1, in `Resources/Licenses/InstrumentSerif-OFL.txt`)
 
 The app's third-party notices are in Settings › About › Acknowledgements. The demo videos in these screenshots were drawn for this page.

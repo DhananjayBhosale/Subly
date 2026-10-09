@@ -242,6 +242,10 @@ struct TranscriptionSettings: View {
                 }
             } label: {
                 Text("Best for \(cap.displayName): \(name)")
+                // The reason, with who measured it, for a model trained for this language.
+                if !pack.isGeneral, let evidence = pack.evidence {
+                    Text(evidence)
+                }
             }
         }
     }

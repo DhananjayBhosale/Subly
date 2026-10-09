@@ -285,6 +285,27 @@ struct WhisperAlignmentTests {
         #expect(words.allSatisfy { $0.end > $0.start })
     }
 
+    @Test("With timestamps off (-nt), DTW still times every word")
+    func noTimestampsKeepsDTW() throws {
+        // Real whisper.cpp output, large-v3-turbo on "Auto workout detection is not
+        // perfect," run with -nt: segment offsets are meaningless (1.16 s, 3.19 s, then
+        // 6.82 s for everything), DTW times are the same as without -nt.
+        let data = json([
+            (" Auto", 0, 1160, [(" Auto", 24)]),
+            (" workout", 1160, 3190, [(" workout", 58)]),
+            (" detection", 3190, 5800, [(" detection", 114)]),
+            (" is", 5800, 6400, [(" is", 140)]),
+            (" not", 6400, 6820, [(" not", 162)]),
+            (" perfect,", 6820, 6820, [(" perfect", 204), (",", 236)]),
+        ])
+        let words = try ExtendedEngineManager.words(fromWhisperJSON: data)
+        #expect(words.map(\.text) == ["Auto", "workout", "detection", "is", "not", "perfect,"])
+        #expect(words.map(\.start) == [0.24, 0.58, 1.14, 1.40, 1.62, 2.04])
+        for (a, b) in zip(words, words.dropFirst()) { #expect(a.end <= b.start) }
+        // No word stretches over the bogus segment ends.
+        #expect(words.allSatisfy { $0.end > $0.start && $0.end - $0.start <= 1.2 })
+    }
+
     @Test("Without DTW times the segment times are used as before")
     func fallsBackToSegments() throws {
         let data = Data(#"{"transcription":[{"text":" hello","offsets":{"from":100,"to":400}},{"text":" there","offsets":{"from":400,"to":900}}]}"#.utf8)

@@ -147,10 +147,24 @@ enum CaptionVideoExporter {
         // Rough picture size per word state, to keep per-word animation within budget.
         let bytesPerPicture = Int(maxWidth * fontSize * 3.2 * 4)
         let wordPictures = tracks.joined().reduce(0) { $0 + ($1.words?.count ?? 1) }
-        let perWord = style.animation.isPerWord && 2 * wordPictures * bytesPerPicture <= imageBudgetBytes
-        // Whole captions without per-word timing are drawn with the effect off.
+        // "Fill each word" needs one picture per caption and a small one per word.
+        let perWordBytes = style.animation == .wordFill
+            ? tracks.joined().count * bytesPerPicture + wordPictures * bytesPerPicture / 4
+            : 2 * wordPictures * bytesPerPicture
+        let perWord = style.needsWordTimes && perWordBytes <= imageBudgetBytes
+        // Whole captions without per-word timing are drawn with the effect off. "Fill
+        // each word" keeps it: without word times it draws the whole caption filled.
         var staticStyle = style
-        if style.animation.isPerWord { staticStyle.animation = .none }
+        if style.needsWordTimes, style.animation != .wordFill {
+            staticStyle.animation = .none
+            staticStyle.highlightsSpokenWord = false
+        }
+        let pad = StyledCaption.reach(style, fontSize: fontSize)
+        // Pictures with more room than the usual outline padding still stack as if they
+        // had the usual padding, so tracks keep the spacing they always had.
+        let extraRoom = pad - fontSize * 0.15
+        let textOrigin = CGPoint(x: pad + StyledCaption.textInset(style, fontSize: fontSize).width,
+                                 y: pad + StyledCaption.textInset(style, fontSize: fontSize).height)
 
         // Items grouped by the slot they share, in track order.
         var bySlot: [Int: [Item]] = [:]
@@ -181,7 +195,37 @@ enum CaptionVideoExporter {
             for item in items {
                 let text = item.cue.lines.joined(separator: "\n")
                 var states: [(image: CGImage, from: Double, to: Double)] = []
-                if perWord, let words = item.words, !words.isEmpty {
+                var fills: [FillPiece] = []
+                if perWord, style.animation == .wordFill, let words = item.words, !words.isEmpty {
+                    // The faded caption once, then each word's fill on its own, revealed
+                    // left to right while the word is said. Smooth at any frame rate,
+                    // for a fraction of the memory of a picture per moment.
+                    let probe = CaptionRunProbe()
+                    if let base = draw(text, style, fontSize, maxWidth, elapsed: -1, duration: length,
+                                       words: words, probe: probe) {
+                        try spend(base)
+                        states.append((base, 0, length))
+                        let picture = CGRect(x: 0, y: 0, width: base.width, height: base.height)
+                        for (index, word) in words.enumerated() {
+                            let runs = probe.runs.filter { $0.word == index }
+                                .map { CaptionRunProbe.Run(word: index, rect: $0.rect.offsetBy(dx: textOrigin.x, dy: textOrigin.y),
+                                                           rightToLeft: $0.rightToLeft) }
+                            let glyphs = runs.reduce(CGRect.null) { $0.union($1.rect) }
+                            guard !glyphs.isNull else { continue }
+                            let crop = glyphs.insetBy(dx: -fontSize * 0.5, dy: -fontSize * 0.5)
+                                .intersection(picture).integral
+                            guard !crop.isEmpty,
+                                  let whole = draw(text, style, fontSize, maxWidth, elapsed: length + 1,
+                                                   duration: length, words: words, onlyWord: index),
+                                  whole.width == base.width, whole.height == base.height,
+                                  let piece = copy(whole, cropping: crop) else { continue }
+                            try spend(piece)
+                            fills.append(FillPiece(image: piece, frame: crop, runs: runs,
+                                                   start: min(length, max(0, word.start)),
+                                                   end: min(length, max(0, word.end))))
+                        }
+                    }
+                } else if perWord, let words = item.words, !words.isEmpty {
                     // One picture per change of state, at the real moments: before the
                     // first word, each word, and (for Karaoke) the pauses between words.
                     // Holding each word's picture until the next word lit it up during
@@ -189,7 +233,7 @@ enum CaptionVideoExporter {
                     var bounds: [Double] = [0, length]
                     for word in words {
                         bounds.append(min(length, max(0, word.start)))
-                        if style.animation == .wordHighlight { bounds.append(min(length, max(0, word.end))) }
+                        if style.highlightsCurrentWord { bounds.append(min(length, max(0, word.end))) }
                     }
                     bounds = Array(Set(bounds.map { ($0 * 1000).rounded() / 1000 })).sorted()
                     for (a, b) in zip(bounds, bounds.dropFirst()) where b - a >= 0.03 {
@@ -214,10 +258,16 @@ enum CaptionVideoExporter {
                     }
                     return layer
                 }
-                blocks.append((layers, size0.height))
+                if let base = layers.first {
+                    for fill in fills {
+                        base.addSublayer(fillLayer(fill, in: size0, captionStart: start, length: length,
+                                                   fontSize: fontSize))
+                    }
+                }
+                blocks.append((layers, size0.height - 2 * extraRoom))
 
                 // Stay responsive and cancellable while preparing a long video.
-                drawn += states.count
+                drawn += states.count + fills.count
                 if drawn >= 40 {
                     drawn = 0
                     await Task.yield()
@@ -248,19 +298,102 @@ enum CaptionVideoExporter {
 
     private static func draw(_ text: String, _ style: CaptionStyle, _ fontSize: CGFloat, _ maxWidth: CGFloat,
                              elapsed: Double, duration: Double,
-                             words: [CaptionAnimationTiming.Word]?) -> CGImage? {
+                             words: [CaptionAnimationTiming.Word]?,
+                             onlyWord: Int? = nil, probe: CaptionRunProbe? = nil) -> CGImage? {
         // The entrance is applied once, by Core Animation; the picture is the settled look.
         // Measured at the width it is drawn at. Sized to its one-line width and then
         // wrapped by a width limit, a long caption came out with its second line cut
         // off below the picture. Without a frame the image is still just the caption.
+        // Room for the outline and shadow.
+        let pad = StyledCaption.reach(style, fontSize: fontSize)
         let view = StyledCaption(text: text, style: style, fontSize: fontSize, elapsed: elapsed,
-                                 duration: duration, words: words, applyTransform: false)
+                                 duration: duration, words: words, applyTransform: false,
+                                 onlyWord: onlyWord, probe: probe)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(fontSize * 0.15)            // room for the outline and shadow
+            .padding(pad)
         let renderer = ImageRenderer(content: view)
-        renderer.proposedSize = ProposedViewSize(width: maxWidth + fontSize * 0.3, height: nil)
+        renderer.proposedSize = ProposedViewSize(width: maxWidth + pad * 2, height: nil)
         renderer.scale = 1
         return renderer.cgImage
+    }
+
+    // MARK: Word fill
+
+    /// One word's fill, cut out of a picture of the caption. `frame` and the runs are in
+    /// that picture's pixels, from its top left; times are from the caption's start.
+    struct FillPiece {
+        var image: CGImage
+        var frame: CGRect
+        var runs: [CaptionRunProbe.Run]
+        var start: Double
+        var end: Double
+    }
+
+    /// A copy of part of `image`, so the rest of the full-size picture can be freed.
+    private static func copy(_ image: CGImage, cropping rect: CGRect) -> CGImage? {
+        guard let part = image.cropping(to: rect),
+              let context = CGContext(data: nil, width: part.width, height: part.height, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.draw(part, in: CGRect(x: 0, y: 0, width: part.width, height: part.height))
+        return context.makeImage()
+    }
+
+    /// The word's fill over the faded caption, behind a mask that opens from where
+    /// reading starts to where it ends while the word is said: the same edge the preview
+    /// draws at every moment (`CaptionTextRenderer`).
+    private static func fillLayer(_ fill: FillPiece, in picture: CGSize, captionStart: Double,
+                                  length: Double, fontSize: CGFloat) -> CALayer {
+        let layer = CALayer()
+        layer.contents = fill.image
+        // Core Animation counts up from the bottom; the picture's pixels down from the top.
+        layer.frame = CGRect(x: fill.frame.minX, y: picture.height - fill.frame.maxY,
+                             width: fill.frame.width, height: fill.frame.height)
+        let mask = CALayer()
+        mask.frame = layer.bounds
+        let width = fill.frame.width, height = fill.frame.height
+        let duration = max(0.01, length - fill.start)
+        let saying = min(1, max(0, (fill.end - fill.start) / duration))
+        let runs = fill.runs.map {
+            CaptionRunProbe.Run(word: $0.word, rect: $0.rect.offsetBy(dx: -fill.frame.minX, dy: -fill.frame.minY),
+                                rightToLeft: $0.rightToLeft)
+        }
+        // A word usually is one run. Two happen when part of it comes from another font
+        // ("₹2000") or it wraps; each part then fills at once, as in the preview.
+        let oneLine = Set(runs.map { Int($0.rect.minY.rounded()) }).count == 1
+        let firstEdge = runs.contains(where: \.rightToLeft) ? runs.map(\.rect.maxX).max() : runs.map(\.rect.minX).min()
+        for run in runs {
+            let rect = run.rect
+            let rtl = run.rightToLeft
+            // The word's first part opens from the edge of the piece, so anything before
+            // its first letter (an italic tail) shows as soon as the word starts, as the
+            // preview's clip keeps everything before the edge. Later parts open from
+            // their own first letter.
+            let isFirst = (rtl ? rect.maxX : rect.minX) == firstEdge
+            let from: CGFloat = rtl ? (isFirst ? width : rect.maxX) : (isFirst ? 0 : rect.minX)
+            let lead = rtl ? from - rect.maxX : rect.minX - from
+            let all = rtl ? from : width - from
+            // Parts on different lines keep to their own line.
+            let band = oneLine ? CGRect(x: 0, y: 0, width: width, height: height)
+                               : rect.insetBy(dx: 0, dy: -fontSize * 0.25)
+            let window = CALayer()
+            window.backgroundColor = CGColor(gray: 0, alpha: 1)
+            window.anchorPoint = CGPoint(x: rtl ? 1 : 0, y: 0)
+            window.bounds = CGRect(x: 0, y: 0, width: 0, height: band.height)
+            window.position = CGPoint(x: from, y: height - band.maxY)
+            let open = CAKeyframeAnimation(keyPath: "bounds.size.width")
+            // Once the word is said, all of it: the preview stops clipping at a full fill.
+            open.values = [lead, lead + rect.width, all, all]
+            open.keyTimes = [0, saying, min(1, saying + 0.0005), 1].map { NSNumber(value: $0) }
+            open.beginTime = begin(captionStart + fill.start)
+            open.duration = duration
+            open.fillMode = .removed
+            open.isRemovedOnCompletion = false
+            window.add(open, forKey: "fill")
+            mask.addSublayer(window)
+        }
+        layer.mask = mask
+        return layer
     }
 
     /// CA treats a begin time of 0 as "now", so time zero must be spelled specially.
