@@ -1,6 +1,6 @@
 # Known limits
 
-What Subly does not do yet, or does not do well. Plain and current as of version 1.3.
+What Subly does not do yet, or does not do well. Plain and current as of version 1.4.
 
 ## Installing
 
@@ -12,8 +12,13 @@ What Subly does not do yet, or does not do well. Plain and current as of version
 ## Privacy
 
 - **Not sandboxed.** The no-upload promise holds by design — the only network requests
-  are the model downloads you start and macOS's own speech and translation downloads —
-  but the operating system does not enforce it, and no automated test checks it.
+  are the model downloads you start, macOS's own speech and translation downloads, and
+  the update check — but the operating system does not enforce it, and no automated test
+  checks it.
+- **The update check is a request to GitHub once a day.** It is a plain request for a small
+  signed file: nothing about you or your videos is sent. It can be turned off in
+  Settings › General. An update is installed only if our own signature on it verifies;
+  macOS cannot check it, because the app is not notarized.
 - **macOS can download speech files when you make captions.** The size is shown first,
   but Make Captions does not ask a second time.
 
@@ -51,6 +56,9 @@ What Subly does not do yet, or does not do well. Plain and current as of version
 - **No per-track caption length.** All tracks share one set of caption rules.
 - **Gradient Pop's font covers basic Latin only.** Accented letters used in Croatian,
   Turkish, Latvian, Polish or Vietnamese fall back to another font inside the word.
+- **The extra caption fonts are macOS system fonts that cover Latin letters.** Other
+  scripts (Devanagari, Arabic, Chinese and so on) fall back to a system font, which may not
+  match the chosen font's look.
 - **Reference subtitles** load only when an `.srt` or `.vtt` with the same name sits
   next to the video.
 - **Accessibility is incomplete.** VoiceOver labels exist for the main controls, but the

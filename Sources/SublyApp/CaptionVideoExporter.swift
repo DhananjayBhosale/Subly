@@ -227,13 +227,16 @@ enum CaptionVideoExporter {
                     }
                 } else if perWord, let words = item.words, !words.isEmpty {
                     // One picture per change of state, at the real moments: before the
-                    // first word, each word, and (for Karaoke) the pauses between words.
-                    // Holding each word's picture until the next word lit it up during
-                    // pauses and before speech, unlike the preview.
+                    // first word, each word, and (for Karaoke and "Box each word") the
+                    // pauses between words. Holding each word's picture until the next
+                    // word lit it up during pauses and before speech, unlike the preview.
+                    // "One word at a time" changes only when the next word starts.
                     var bounds: [Double] = [0, length]
                     for word in words {
                         bounds.append(min(length, max(0, word.start)))
-                        if style.highlightsCurrentWord { bounds.append(min(length, max(0, word.end))) }
+                        if style.highlightsCurrentWord || style.animation == .wordBox {
+                            bounds.append(min(length, max(0, word.end)))
+                        }
                     }
                     bounds = Array(Set(bounds.map { ($0 * 1000).rounded() / 1000 })).sorted()
                     for (a, b) in zip(bounds, bounds.dropFirst()) where b - a >= 0.03 {
@@ -248,10 +251,13 @@ enum CaptionVideoExporter {
                     states.append((image, 0, length))
                 }
                 guard let size0 = states.first.map({ CGSize(width: $0.image.width, height: $0.image.height) }) else { continue }
+                // Each state is as big as its own picture ("One word at a time" has a
+                // different width for every word); the block is as tall as the tallest.
+                let tallest = states.map(\.image.height).max() ?? Int(size0.height)
                 let layers = states.map { state -> CALayer in
                     let layer = CALayer()
                     layer.contents = state.image
-                    layer.bounds = CGRect(origin: .zero, size: size0)
+                    layer.bounds = CGRect(x: 0, y: 0, width: state.image.width, height: state.image.height)
                     if states.count > 1 {
                         layer.opacity = 0
                         layer.add(visibility(from: start + state.from, to: start + state.to), forKey: "word")
@@ -264,7 +270,7 @@ enum CaptionVideoExporter {
                                                    fontSize: fontSize))
                     }
                 }
-                blocks.append((layers, size0.height - 2 * extraRoom))
+                blocks.append((layers, CGFloat(tallest) - 2 * extraRoom))
 
                 // Stay responsive and cancellable while preparing a long video.
                 drawn += states.count + fills.count
@@ -417,18 +423,23 @@ enum CaptionVideoExporter {
     /// entrance. Values come from `CaptionAnimationTiming`, the same as the preview.
     private static func addCaptionAnimation(to layer: CALayer, style: CaptionStyle,
                                             start: Double, length: Double, fontSize: CGFloat) {
-        let samples = 24
-        var opacity: [Double] = [], scale: [Double] = [], offset: [Double] = [], times: [NSNumber] = []
-        for i in 0...samples {
-            let f = Double(i) / Double(samples)
-            // Sample densely near the start and end, where the motion is.
-            let elapsed = f < 0.5 ? min(length / 2, f * 2 * min(length / 2, 0.4))
-                                  : max(length / 2, length - (1 - f) * 2 * min(length / 2, 0.4))
-            let t = CaptionAnimationTiming.transform(style.animation, elapsed: elapsed, duration: length)
-            // SwiftUI's offset is downward; Core Animation's y is upward.
-            opacity.append(t.opacity); scale.append(t.scale); offset.append(-t.offset * fontSize)
-            times.append(NSNumber(value: elapsed / length))
+        // Sample densely near the start and end, where the motion is. The dense stretch
+        // is at least as long as the entrance and the exit (a Slow bounce takes a second)
+        // and never more than half the caption; between the two the caption is at rest.
+        let speed = max(0.05, style.animationSpeed)
+        let window = min(length / 2, max(0.4, CaptionAnimationTiming.entranceDuration(style.animation) / speed,
+                                         CaptionAnimationTiming.outDuration / speed))
+        func spread(from a: Double, to b: Double, _ count: Int) -> [Double] {
+            (0..<count).map { a + (b - a) * Double($0) / Double(count - 1) }
         }
+        // 48 samples: all in one stretch for a caption that is nothing but entrance and exit.
+        let elapsed = window * 2 >= length
+            ? spread(from: 0, to: length, 48)
+            : spread(from: 0, to: window, 24) + spread(from: length - window, to: length, 24)
+        let poses = elapsed.map {
+            CaptionAnimationTiming.transform(style.animation, elapsed: $0, duration: length, speed: style.animationSpeed)
+        }
+        let times = elapsed.map { NSNumber(value: $0 / length) }
         func keyframes(_ path: String, _ values: [Double]) -> CAKeyframeAnimation {
             let a = CAKeyframeAnimation(keyPath: path)
             a.values = values
@@ -439,10 +450,17 @@ enum CaptionVideoExporter {
             a.isRemovedOnCompletion = false
             return a
         }
-        layer.add(keyframes("opacity", opacity), forKey: "opacity")
-        if style.animation == .pop { layer.add(keyframes("transform.scale", scale), forKey: "scale") }
-        if style.animation == .slideUp {
-            layer.add(keyframes("transform.translation.y", offset), forKey: "slide")
+        // Opacity always: it is also what shows the caption during its own time.
+        layer.add(keyframes("opacity", poses.map(\.opacity)), forKey: "opacity")
+        // The others only when they move something. SwiftUI's offsets are down and its
+        // rotation clockwise; Core Animation's y is up and its rotation anticlockwise.
+        func track(_ path: String, _ key: String, _ rest: Double, _ value: (CaptionAnimationTiming.Pose) -> Double) {
+            let values = poses.map(value)
+            if values.contains(where: { abs($0 - rest) > 1e-9 }) { layer.add(keyframes(path, values), forKey: key) }
         }
+        track("transform.scale", "scale", 1) { $0.scale }
+        track("transform.translation.x", "slideX", 0) { $0.offsetX * fontSize }
+        track("transform.translation.y", "slide", 0) { -$0.offsetY * fontSize }
+        track("transform.rotation.z", "tilt", 0) { -$0.rotation * .pi / 180 }
     }
 }

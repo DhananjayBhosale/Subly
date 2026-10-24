@@ -32,7 +32,7 @@ whisper.cpp into `vendor/` (also ignored), and checks out the version pinned in 
 script. Without it the app still works with Apple's engines. The optional Whisper and
 Apex models will not run.
 
-`swift test` currently runs 204 tests: 140 in `SublyCaptionsTests` and 64 in
+`swift test` currently runs 235 tests: 152 in `SublyCaptionsTests` and 83 in
 `SublyEngineTests`.
 
 `./Scripts/run.sh` builds and opens the app.
@@ -42,7 +42,7 @@ Apex models will not run.
 | Target | What it is |
 |---|---|
 | `SublyCaptions` | Pure, deterministic caption core. Foundation only. Timing spine, segmentation, caption rules, romanization, SRT/VTT/TXT/JSON writers, project format. Almost all tests live here. |
-| `SublyEngine` | Speech, translation, and model routing. Apple Speech and Translation, FoundationModels, AVFoundation, the capability registry, locale reservations, and the downloadable Whisper/Apex models run through whisper.cpp. |
+| `SublyEngine` | Speech, translation, and model routing. Apple Speech and Translation, FoundationModels, AVFoundation, the capability registry, locale reservations, and the downloadable Whisper/Apex models run through whisper.cpp. Also `AppUpdate`, the rules for trusting an update (signature, versions, checksum), which have no UI and are unit-tested. |
 | `SublyTranslate` | A small bridge to a SwiftUI-attached `TranslationSession`. Built in Swift 5 language mode on purpose, because `translationTask` hands over a non-Sendable session that Swift 6 strict concurrency rejects. |
 | `SublyApp` | The SwiftUI app. |
 
@@ -80,7 +80,7 @@ Results are written to stderr with a prefix (`GEN:`, `ENGINE:`, `STORAGE:`, `OUT
 |---|---|---|
 | `SUBLY_SELFCHECK` | any value | Reports window count, titles, frames, and activation policy, then exits. Tells "no window" from "window cannot be listed". |
 | `SUBLY_LAYOUT_CHECK` | any value | Resizes the real window through a set of widths and reports the layout mode and responsive flags at each. Loads the newest saved project first (unless the route is `empty`), so the editor is actually built. |
-| `SUBLY_LAYOUT_SHOTS` | output directory | With the layout check, writes a PNG per route per width. Layout only: it does not composite system materials, so bars and panels can look white in Dark Mode. |
+| `SUBLY_LAYOUT_SHOTS` | output directory | With the layout check, writes a PNG per route per width, the Look panel a screenful at a time (`look-1`, `look-2`…), and a contact sheet of every caption look on a dark and a bright picture (`looks-dark`, `looks-bright`). Layout only: it does not composite system materials, so bars and panels can look white in Dark Mode. |
 | `SUBLY_LAYOUT_ROUTE` | `empty`, `home`, `new`, or `editor` (default `editor`) | Which step the layout check sweeps. `empty` skips loading a project. |
 | `SUBLY_EDIT_CHECK` | `file\|lang\|outputs` | Runs real generation, then asserts the editing rules: identical cue counts and timings across tracks, edit isolation, undo, reflow, and export. |
 | `SUBLY_SPELLING_CHECK` | `file\|lang\|outputs\|heard\|preferred` | Makes captions, changes one word as a person would, and checks the spelling is learned, offered for the rest of the track, and used when the captions are made again. Learning is never saved in a test run. With `SUBLY_SPELLING_UNDO`, checks that Undo un-teaches it instead; `SUBLY_SPELLING_PAUSE` (seconds) holds the banner for a screenshot. |
@@ -104,17 +104,50 @@ Results are written to stderr with a prefix (`GEN:`, `ENGINE:`, `STORAGE:`, `OUT
 | `SUBLY_DETECT_CHECK` | media file path | Imports the file and runs language detection. Prints a `DETECT` line. Saves nothing. |
 | `SUBLY_KEY_CHECK` | any value | Focuses a text field and sends Space, ← and "c" through the app, checking they edit the text instead of starting playback. Prints `KEY` lines. |
 | `SUBLY_VIDEO_EXPORT_CHECK` | output `.mp4` path | With `SUBLY_OPEN_RECENT`, exports the project as a video with burned-in captions, without a save panel. Prints `VIDEO` lines, including whether the bundled Instrument Serif font registered. |
-| `SUBLY_PREVIEW_TEMPLATE` | `clean`, `boldPop`, `karaoke`, `boxed`, `minimal`, `typewriter`, `gradientPop` | With `SUBLY_OPEN_RECENT`, shows the project in that caption style. Not saved. |
+| `SUBLY_PREVIEW_TEMPLATE` | a look's name in code, for example `clean`, `boldPop`, `karaoke`, `neon`, `wordBox`, `oneWord` or `rainbow` (see `CaptionStyle.Template`) | With `SUBLY_OPEN_RECENT`, shows the project in that caption style. Not saved. |
 | `SUBLY_SHOW_LIST_LATER` | any value | With `SUBLY_OPEN_RECENT`, switches the editor to the caption list a moment after it opens. |
 | `SUBLY_HOME_DURING_RUN` | any value | With `SUBLY_GENERATE`, goes back to the projects step while captions are being made, and reports the step after the run. |
 | `SUBLY_PANEL_TAB` | `captions`, `look` or `share` | With `SUBLY_OPEN_RECENT`, opens that tab of the editor panel. |
 | `SUBLY_SEEK` | seconds | With `SUBLY_OPEN_RECENT` or `SUBLY_LAYOUT_CHECK`, moves the playhead there, for capturing a caption on screen. |
+| `SUBLY_UPDATE_FEED` | URL of an `update.json` (a `file://` URL works) | Points the update check at that file instead of GitHub; its signature must sit beside it with `.sig` added. Allows `file://` download links. It never changes the public key an update must be signed with. |
+| `SUBLY_UPDATE_CHECK` | `check`, `install`, `window` or `report` | `check` looks, prints `UPDATE result …` and quits. `install` looks, then downloads, verifies and replaces this copy without asking, printing an `UPDATE …` line per step; it restarts the new binary directly with `report`, so no normal session starts. `window` looks and leaves the Software Update window open. `report` is what the restarted copy does: append `UPDATE relaunched <version>` to `SUBLY_UPDATE_LOG` and quit. Run it on a scratch copy of the app, never on the one in Applications. |
+| `SUBLY_UPDATE_LOG` | file path | With `SUBLY_UPDATE_CHECK`, also appends every `UPDATE` line there, so the restarted copy's line lands next to the old one's. |
+| `SUBLY_UPDATE_SAVE_DIR` | folder path | With `SUBLY_UPDATE_CHECK=install`, where the verified disk image goes when Subly cannot replace itself. A test run otherwise saves nothing, to keep off the real Downloads folder (macOS asks permission for it). |
 | `SUBLY_MENU_CHECK` | any value | Prints every menu with its shortcut and whether it is enabled, and presses ⌘E to prove the command is live. |
 | `SUBLY_PREPARE_TIMEOUT` | seconds | Read in `SublyTranslate`, not the app delegate. Shortens the wait for Apple's translation download sheet from 600 s, for runs where nobody is there to accept it. |
 
 There is also `SUBLY_OUTPUT_CHECK` (`file|wrongLang|wantedOutput`), which opens a
 project with a wrong spoken language and asks for another output. It is not part of
 the matrix below but follows the same pattern.
+
+## Releasing a version
+
+Subly updates itself from GitHub Releases. A copy of Subly trusts an update only if
+`update.json` carries our Ed25519 signature (the public key is `AppUpdate.publicKey`),
+because the app is ad-hoc signed and macOS cannot say who made a download.
+
+1. Raise `VERSION` in `Scripts/build_app.sh` and the version in `README.md`,
+   `site/index.html` and `docs/KNOWN_LIMITS.md`. Write the release notes, and a few
+   bullet lines for the update window.
+2. `swift test`, then `./Scripts/make_dmg.sh`. It writes `build/Subly-<version>.dmg`.
+3. Copy it to `build/Subly.dmg`. The asset must be named `Subly.dmg`: the website and
+   the signed update link use that name.
+4. `./Scripts/sign_update.sh build/Subly.dmg <update notes file>` writes
+   `build/update.json`, `build/update.json.sig` and `build/SHA256SUMS.txt`, then
+   checks the signature with the app's own code. The private key stays in the login
+   Keychain as "Subly update signing key" and is read only through a pipe; it is
+   never printed, written to a file or passed as an argument.
+5. Create the GitHub release and upload all four files: `Subly.dmg`, `update.json`,
+   `update.json.sig` and `SHA256SUMS.txt`. GitHub's `releases/latest/download/…` links
+   point at the newest release that is not a pre-release, so publish a draft or
+   pre-release first if you want to try one.
+
+To rehearse an update, point a scratch copy of the app at a signed feed with
+`SUBLY_UPDATE_FEED` (see above). Do not run it on `/Applications/Subly.app`.
+
+If the key is lost, installed copies cannot be updated from inside the app. People
+would have to download the next release by hand once, and the new copy would carry a
+new public key. Copies older than 1.4 have no updater, so they download 1.4 by hand.
 
 ## Before you open a pull request
 

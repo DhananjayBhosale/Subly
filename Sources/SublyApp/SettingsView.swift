@@ -20,6 +20,8 @@ struct SettingsView: View {
 
 private struct GeneralSettings: View {
     @Environment(AppModel.self) private var model
+    @Environment(Updater.self) private var updater
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Form {
@@ -60,6 +62,16 @@ private struct GeneralSettings: View {
                 }
                 Toggle("Fix spelling and punctuation with Apple Intelligence", isOn: Binding(
                     get: { model.useRefinementDefault }, set: { model.useRefinementDefault = $0 }))
+            }
+
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: Binding(
+                    get: { updater.checksAutomatically }, set: { updater.checksAutomatically = $0 }))
+                Button("Check Now") {
+                    openWindow(id: Updater.windowID)
+                    Task { await updater.check(userInitiated: true) }
+                }
+                .disabled(updater.isBusy)
             }
         }
         .formStyle(.grouped)
@@ -309,7 +321,7 @@ private struct AboutSettings: View {
                 LabeledContent("No download needed", value: "\(state.appleLanguageCount)")
             }
             Divider()
-            Text("Your video and audio never leave this Mac. The only network use is downloading models: macOS fetches a language's speech model the first time you caption in it, and the extra-language downloads happen only when you ask for them. Once a model is on your Mac, captioning makes no network request at all.")
+            Text("Your video and audio never leave this Mac. The only network use is downloading models and checking for updates: macOS fetches a language's speech model the first time you caption in it, the extra-language downloads happen only when you ask for them, and once a day Subly asks GitHub whether a newer version is out, sending nothing about you or your videos (you can turn that off in General). Once a model is on your Mac, captioning makes no network request at all.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

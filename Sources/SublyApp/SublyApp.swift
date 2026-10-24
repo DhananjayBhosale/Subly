@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated {
             guard let model = Self.model else { return .terminateNow }
             NSApp.keyWindow?.makeFirstResponder(nil)
-            if let work = model.workInProgress, !AppModel.isHookRun {
+            if let work = model.workInProgress, !AppModel.isHookRun, !Updater.relaunching {
                 let alert = NSAlert()
                 alert.messageText = "Quit while \(work)?"
                 alert.informativeText = "It will stop, and you'll have to start it again."
@@ -51,6 +51,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Test hook: verify Dark Mode without changing the user's system appearance.
         if let want = ProcessInfo.processInfo.environment["SUBLY_APPEARANCE"] {
             NSApp.appearance = NSAppearance(named: want == "dark" ? .darkAqua : .aqua)
+        }
+        // Headless update check and install against a test feed. See Updater.runHook.
+        if ProcessInfo.processInfo.environment["SUBLY_UPDATE_CHECK"] != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                Task { await Updater.shared.runHook() }
+            }
         }
         // Headless self-check: window enumeration via System Events fails while the
         // screen is locked, so let the app report its own state.
@@ -990,6 +996,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 FileHandle.standardError.write(Data("SHOT \(url.lastPathComponent)\n".utf8))
             }
         }
+        // The Look pane, a screenful at a time, since it scrolls: the grid of looks first,
+        // then the controls below it. After that, each look on a dark and a bright picture.
+        model?.route = .editor
+        model?.panelTab = .look
+        window.setFrame(NSRect(x: 30, y: 30, width: 1240, height: 860), display: true)
+        window.displayIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.8))
+        if let content = window.contentView, let panel = Self.panelScroller(in: content, ofWidth: window.frame.width) {
+            let page = panel.contentView.bounds.height * 0.85
+            var y: CGFloat = 0, part = 1
+            while let document = panel.documentView {
+                panel.contentView.scroll(to: NSPoint(x: 0, y: y))
+                panel.reflectScrolledClipView(panel.contentView)
+                RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+                if let rep = panel.bitmapImageRepForCachingDisplay(in: panel.bounds) {
+                    panel.cacheDisplay(in: panel.bounds, to: rep)
+                    if let png = rep.representation(using: .png, properties: [:]) {
+                        let url = dir.appendingPathComponent("look-\(part)-\(suffix).png")
+                        try? png.write(to: url)
+                        FileHandle.standardError.write(Data("SHOT \(url.lastPathComponent)\n".utf8))
+                    }
+                }
+                if y + panel.contentView.bounds.height >= document.frame.height - 1 { break }
+                y = min(y + page, document.frame.height - panel.contentView.bounds.height)
+                part += 1
+            }
+        }
+        captureLooks(into: dir)
         // The Speech Models sheet is its own window, so draw that too — tall enough to
         // show every section, since a bitmap of a scroll view holds only what is visible.
         window.setFrame(NSRect(x: 30, y: 30, width: 1100, height: 2400), display: true)
@@ -1012,6 +1046,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+extension AppDelegate {
+    /// The scroll view of the editor's side panel: the right-most one that has more to
+    /// scroll than it shows.
+    @MainActor
+    static func panelScroller(in view: NSView, ofWidth width: CGFloat) -> NSScrollView? {
+        var best: NSScrollView?
+        func walk(_ v: NSView) {
+            if let scroll = v as? NSScrollView, let document = scroll.documentView,
+               document.frame.height > scroll.contentView.bounds.height + 1,
+               scroll.convert(scroll.bounds, to: nil).minX > width / 2,
+               scroll.convert(scroll.bounds, to: nil).minX > (best.map { $0.convert($0.bounds, to: nil).minX } ?? 0) {
+                best = scroll
+            }
+            v.subviews.forEach(walk)
+        }
+        walk(view)
+        return best
+    }
+
+    /// Every caption look, mid-caption, on a dark picture and on a bright one, drawn
+    /// the way the export draws a caption (`ImageRenderer`). Sized like a 360-point-wide
+    /// reel, so each look has the text size it would have on a phone video.
+    @MainActor
+    static func captureLooks(into dir: URL) {
+        let sample = "Your caption looks like this"
+        let words = CaptionAnimationTiming.words(in: sample, start: 0, end: 2.6)
+        let pictures: [(name: String, colours: [Color])] = [
+            ("dark", [Color(red: 0.05, green: 0.08, blue: 0.12), Color(red: 0.22, green: 0.27, blue: 0.38)]),
+            ("bright", [Color(red: 1, green: 0.97, blue: 0.85), Color(red: 0.55, green: 0.8, blue: 1)]),
+        ]
+        let looks = CaptionStyle.Template.allCases
+        let rows = stride(from: 0, to: looks.count, by: 3).map { Array(looks[$0..<min($0 + 3, looks.count)]) }
+        for picture in pictures {
+            let sheet = Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+                ForEach(rows, id: \.first) { row in
+                    GridRow {
+                        ForEach(row) { look in
+                            let style = CaptionStyle.preset(look)
+                            VStack(spacing: 2) {
+                                ZStack {
+                                    LinearGradient(colors: picture.colours, startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    StyledCaption(text: sample, style: style, fontSize: style.size * 360,
+                                                  elapsed: 1.5, duration: 3, words: words)
+                                        .frame(maxWidth: 360 * 0.92)
+                                }
+                                .frame(width: 360, height: 120)
+                                .clipped()
+                                Text(look.displayName).font(.caption).foregroundStyle(.white)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color(white: 0.12))
+            let renderer = ImageRenderer(content: sheet)
+            renderer.scale = 2
+            guard let tiff = renderer.nsImage?.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                  let png = rep.representation(using: .png, properties: [:]) else { continue }
+            let url = dir.appendingPathComponent("looks-\(picture.name).png")
+            try? png.write(to: url)
+            FileHandle.standardError.write(Data("SHOT \(url.lastPathComponent)\n".utf8))
+        }
+    }
+}
+
 @main
 struct SublyApp: App {
     @State private var model = AppModel()
@@ -1025,6 +1125,7 @@ struct SublyApp: App {
         Window("Subly", id: "main") {
             RootView()
                 .environment(model)
+                .environment(Updater.shared)
                 .preferredColorScheme(model.appearance.colorScheme)
                 // The Theme setting has to reach every window, not just this one: the
                 // Settings window (where the Theme picker lives) and the open/save
@@ -1039,6 +1140,7 @@ struct SublyApp: App {
                 }
                 .task {
                     AppDelegate.model = model
+                    Updater.shared.startAutomaticChecks()
                     await model.loadCapabilities()
                     if let url = AppDelegate.pendingOpen.first {
                         // A video opened from Finder is what to show, not the last project.
@@ -1053,12 +1155,23 @@ struct SublyApp: App {
         }
         .windowResizability(.contentMinSize)
         .defaultSize(width: 1240, height: 820)
-        .commands { SublyCommands(model: model, state: commandState) }
+        .commands { SublyCommands(model: model, updater: Updater.shared, state: commandState) }
+
+        // Opens on request (Subly › Check for Updates…, or by itself when a check finds
+        // something), never at launch, and is not restored with the other windows.
+        Window("Software Update", id: Updater.windowID) {
+            UpdateView()
+                .environment(Updater.shared)
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
 
         Settings {
             SettingsView()
                 .environment(model)
-                .frame(width: 560, height: 420)
+                .environment(Updater.shared)
+                .frame(width: 560, height: 480)
         }
     }
 }
@@ -1136,6 +1249,8 @@ struct CommandState: Equatable {
 
 struct SublyCommands: Commands {
     let model: AppModel
+    let updater: Updater
+    @Environment(\.openWindow) private var openWindow
     /// Built in the App body and passed in. Menu items set their enabled state and
     /// titles once and did not follow later changes — neither from the model directly
     /// nor from a focused value (which also went nil whenever focus moved) — so Export
@@ -1147,6 +1262,13 @@ struct SublyCommands: Commands {
         // Apple's standard View-menu items: Show/Hide Toolbar and Customize Toolbar…,
         // so the window can be arranged the way every Mac app is.
         ToolbarCommands()
+
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") {
+                openWindow(id: Updater.windowID)
+                Task { await updater.check(userInitiated: true) }
+            }
+        }
 
         CommandGroup(replacing: .newItem) {
             Button("Open Media…") { openMedia() }

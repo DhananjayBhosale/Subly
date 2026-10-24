@@ -7,7 +7,7 @@
 **Captions for your videos, made right on your Mac.**<br>
 The words you said, the same words in English letters, and a translation — all perfectly in sync.
 
-[![Download for Mac](https://img.shields.io/badge/Download_for_Mac-Subly_1.3-0A84FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/DhananjayBhosale/Subly/releases/latest)
+[![Download for Mac](https://img.shields.io/badge/Download_for_Mac-Subly_1.4-0A84FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/DhananjayBhosale/Subly/releases/latest)
 [![Website](https://img.shields.io/badge/Website-subly.dhananjaytech.app-E63CA0?style=for-the-badge)](https://subly.dhananjaytech.app)
 
 ![macOS 26+](https://img.shields.io/badge/macOS-26%2B-111?logo=apple) ![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-M1_and_later-111) ![On-device](https://img.shields.io/badge/100%25-on--device-34C759) ![MIT licence](https://img.shields.io/badge/licence-MIT-lightgrey)
@@ -48,7 +48,7 @@ Then burn them into the video, Reels-style:
 - **🎯 In sync.** Long videos are cut at pauses and keep real word timings. Still a hair off? **Sync** nudges every caption 0.05 s earlier or later.
 - **✋ Edit on the video.** Click a caption to fix a word, click away to save. Drag it to move all captions up or down.
 - **🧠 Learns your spelling.** Change "yah" to "ye" once and Subly writes "ye" in every new caption. See or forget what it learned in Settings › Languages.
-- **🎨 Caption looks.** Clean, Bold Pop, Karaoke, Boxed, Minimal, Typewriter and Gradient Pop, where each word fills with colour as it's said. Then pick the size, font (Instrument Serif included), italics, a solid or gradient colour for the text and the box, a highlight for the spoken word, and where captions sit.
+- **🎨 Caption looks.** 22 looks, from Clean, Bold Pop and Karaoke to Neon, Word Box, One Word, Highlighter and Rainbow, plus Gradient Pop, where each word fills with colour as it's said. Then pick the size, letter spacing, font (Mac system fonts and Instrument Serif), italics, a solid or gradient colour for the text and the box, the outline, glow or shadow and its thickness, an entrance (slide, zoom, bounce, drop, tilt, flicker, shake) at slow, normal or fast speed, a highlight for the spoken word, and where captions sit.
 - **🇮🇳 Made for Hinglish.** The optional Apex model writes Hindi straight into English letters. Add names and brands ("iPhone", "Fitbit Air") so they're spelled right.
 - **📤 Share anywhere.** A video with captions burned in for Instagram, Reels and Shorts, or SRT, VTT, TXT and JSON files for YouTube and editors.
 - **↩️ Undo everything.** Even Listen Again, which redoes the whole video.
@@ -60,6 +60,8 @@ Then burn them into the video, Reels-style:
 3. Open **System Settings › Privacy & Security**, scroll down and click **Open Anyway** next to Subly. You only do this once.
 
 You need an Apple Silicon Mac with **macOS 26** or later.
+
+After that, Subly checks for updates once a day and updates itself with one click. You can turn this off in Settings.
 
 ## 🧭 Good to know
 
@@ -87,7 +89,7 @@ cd Subly
 - Skip `build_engine.sh` and the app still works with Apple's speech engines. Only the
   optional models need the whisper.cpp runtime, which is not in git.
 
-See `CONTRIBUTING.md` for tests and the headless check harnesses. `swift test` runs 204 tests.
+See `CONTRIBUTING.md` for tests and the headless check harnesses. `swift test` runs 235 tests.
 
 </details>
 

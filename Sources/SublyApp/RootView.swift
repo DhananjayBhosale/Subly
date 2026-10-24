@@ -6,6 +6,8 @@ import SublyTranslate
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(Updater.self) private var updater
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         LayoutReader {
@@ -20,6 +22,8 @@ struct RootView: View {
         }
         // Must be in the view tree for `translationTask` to work at all.
         .background(TranslationHost(bridge: model.translationBridge))
+        // A check that finds an update opens its window from here: only a view can.
+        .onChange(of: updater.windowRequest) { openWindow(id: Updater.windowID) }
         .sheet(isPresented: Binding(get: { model.showExport }, set: { model.showExport = $0 })) {
             ExportSheet()
         }

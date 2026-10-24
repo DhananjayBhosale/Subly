@@ -44,6 +44,36 @@ enum CaptionFonts {
     }()
 }
 
+extension CaptionStyle.Font {
+    /// PostScript names of the fonts that ship with macOS, regular then bold. Nil for the
+    /// fonts drawn by the system's own design (Standard, Rounded, Serif, Condensed,
+    /// Monospaced) and for Instrument Serif, which Subly carries itself.
+    fileprivate var installedNames: (regular: String, bold: String)? {
+        switch self {
+        case .avenirNext:         return ("AvenirNext-Medium", "AvenirNext-Heavy")
+        case .futura:             return ("Futura-Medium", "Futura-Bold")
+        case .impact:             return ("Impact", "Impact")
+        case .markerFelt:         return ("MarkerFelt-Thin", "MarkerFelt-Wide")
+        case .chalkboard:         return ("ChalkboardSE-Regular", "ChalkboardSE-Bold")
+        case .americanTypewriter: return ("AmericanTypewriter", "AmericanTypewriter-Bold")
+        case .didot:              return ("Didot", "Didot-Bold")
+        case .georgia:            return ("Georgia", "Georgia-Bold")
+        case .rockwell:           return ("Rockwell-Regular", "Rockwell-Bold")
+        case .copperplate:        return ("Copperplate", "Copperplate-Bold")
+        case .system, .rounded, .serif, .condensed, .instrumentSerif, .monospaced: return nil
+        }
+    }
+}
+
+extension CaptionFonts {
+    /// The macOS fonts above that this Mac really has, looked up once. A missing one
+    /// draws in the system font instead.
+    static let installed: Set<String> = {
+        let all = CaptionStyle.Font.allCases.compactMap(\.installedNames).flatMap { [$0.regular, $0.bold] }
+        return Set(all.filter { NSFont(name: $0, size: 12) != nil })
+    }()
+}
+
 extension CaptionStyle {
     func font(size: CGFloat) -> SwiftUI.Font {
         let weight: SwiftUI.Font.Weight = bold ? (font == .condensed ? .black : .bold) : .medium
@@ -53,6 +83,7 @@ extension CaptionStyle {
         case .rounded:   result = .system(size: size, weight: weight, design: .rounded)
         case .serif:     result = .system(size: size, weight: weight, design: .serif)
         case .condensed: result = .system(size: size, weight: weight).width(.condensed)
+        case .monospaced: result = .system(size: size, weight: weight, design: .monospaced)
         case .instrumentSerif:
             // One weight only, so Bold is ignored. Fixed size: the export draws at an
             // exact pixel size.
@@ -61,12 +92,24 @@ extension CaptionStyle {
                                fixedSize: size)
             }
             result = .system(size: size, weight: .regular, design: .serif)
+        case .avenirNext, .futura, .impact, .markerFelt, .chalkboard, .americanTypewriter,
+             .didot, .georgia, .rockwell, .copperplate:
+            if let names = font.installedNames {
+                let name = bold ? names.bold : names.regular
+                result = CaptionFonts.installed.contains(name) ? .custom(name, fixedSize: size)
+                                                               : .system(size: size, weight: weight)
+            } else {
+                result = .system(size: size, weight: weight)
+            }
         }
         return italic ? result.italic() : result
     }
 
     /// The text's paint: the gradient's colours, or the one text colour.
     var textFill: [Color] { (textGradient ?? [textColor]).map(Color.init(hex:)) }
+
+    /// The box's colours: one, or the gradient's.
+    var boxColours: [Color] { (boxGradient ?? [boxColor]).map(Color.init(hex:)) }
 
     /// The box's paint, solid or a gradient left to right.
     var boxFill: AnyShapeStyle {
@@ -100,47 +143,76 @@ struct StyledCaption: View {
     /// Export only: told where each word was drawn.
     var probe: CaptionRunProbe? = nil
 
-    private var shown: String { style.display(text) }
+    /// "One word at a time" shows only the word being said (the whole caption when the
+    /// words have no times, as in a translation).
+    private var shown: String {
+        if style.animation == .oneWord, let words,
+           let index = CaptionAnimationTiming.shownWord(words, elapsed: elapsed) {
+            return style.display(words[index].text)
+        }
+        return style.display(text)
+    }
 
-    /// Gradient text and "Fill each word" are painted by `CaptionTextRenderer`. Every
-    /// other look keeps plain coloured text.
-    private var usesRenderer: Bool { style.textGradient != nil || style.animation == .wordFill }
+    /// Gradient text, "Fill each word", "Box each word" and the marker stripe are painted
+    /// by `CaptionTextRenderer`. Every other look keeps plain coloured text.
+    private var usesRenderer: Bool {
+        style.textGradient != nil || style.animation == .wordFill || style.animation == .wordBox
+            || style.background == .highlighter
+    }
 
     /// Where the text starts inside the caption, from its top left.
     static func textInset(_ style: CaptionStyle, fontSize: CGFloat) -> CGSize {
         style.background == .box ? CGSize(width: fontSize * 0.4, height: fontSize * 0.18) : .zero
     }
 
-    /// How far the drawing reaches past the caption's frame: the outline and shadow, or
-    /// the wide soft shade of a word-fill caption.
+    /// How far the drawing reaches past the caption's frame: the outline, shadow or glow,
+    /// the marker stripe, the box round a word, or the wide soft shade of a word-fill
+    /// caption.
     static func reach(_ style: CaptionStyle, fontSize: CGFloat) -> CGFloat {
-        fontSize * (style.background == .shadow && style.animation == .wordFill ? 0.6 : 0.15)
+        let w = style.edgeWidth
+        var em: Double
+        switch style.background {
+        case .none, .box:    em = 0.15
+        case .shadow:        em = style.animation == .wordFill ? 0.6 * max(1, w) : max(0.15, 0.12 * w)
+        case .outline:       em = max(0.15, 0.06 * w + 0.05)
+        case .glow:          em = 0.6 * w
+        case .offsetShadow:  em = 0.15 + 0.06 * w
+        case .splitColour:   em = 0.15 + 0.04 * w
+        case .highlighter:   em = 0.3
+        }
+        if style.animation == .wordBox { em = max(em, 0.2) }
+        return fontSize * em
     }
 
     /// Condensed, extra-heavy type suits English letters but squeezes Devanagari and
     /// other scripts until the letters collide, so those get the standard width.
     private var effectiveStyle: CaptionStyle {
-        guard style.font == .condensed,
+        guard style.font == .condensed || style.font == .impact,
               text.unicodeScalars.contains(where: { !$0.isASCII && CharacterSet.letters.contains($0) })
         else { return style }
         var s = style
+        // Impact has no bold of its own; keep the system font heavy in its place.
+        if s.font == .impact { s.bold = true }
         s.font = .system
         return s
     }
 
     var body: some View {
-        let t = applyTransform
-            ? CaptionAnimationTiming.transform(style.animation, elapsed: elapsed, duration: duration)
-            : (opacity: 1, scale: 1, offset: 0)
+        let pose = applyTransform
+            ? CaptionAnimationTiming.transform(style.animation, elapsed: elapsed, duration: duration,
+                                               speed: style.animationSpeed)
+            : .identity
         decorated
-            .scaleEffect(t.scale)
-            .offset(y: t.offset * fontSize)
-            .opacity(t.opacity)
+            .scaleEffect(pose.scale)
+            .rotationEffect(.degrees(pose.rotation))
+            .offset(x: pose.offsetX * fontSize, y: pose.offsetY * fontSize)
+            .opacity(pose.opacity)
     }
 
     @ViewBuilder
     private var decorated: some View {
         let edge = Color(hex: style.edgeColor)
+        let thickness = style.edgeWidth
         // The export's word-fill pictures hold only the fill, in the same layout.
         let bare = onlyWord != nil
         switch style.background {
@@ -159,24 +231,25 @@ struct StyledCaption: View {
                         ForEach(0..<8, id: \.self) { i in
                             let angle = Double(i) * .pi / 4
                             styledText(uniform: edge)
-                                .offset(x: cos(angle) * fontSize * 0.07, y: sin(angle) * fontSize * 0.07)
+                                .offset(x: cos(angle) * fontSize * 0.07 * thickness,
+                                        y: sin(angle) * fontSize * 0.07 * thickness)
                         }
                     }
-                    .blur(radius: fontSize * 0.16)
+                    .blur(radius: fontSize * 0.16 * thickness)
                     .opacity(0.6)
                     styledText(uniform: edge.opacity(0.9))
-                        .blur(radius: fontSize * 0.04)
-                        .offset(y: fontSize * 0.03)
+                        .blur(radius: fontSize * 0.04 * thickness)
+                        .offset(y: fontSize * 0.03 * thickness)
                 }
                 styledText(uniform: nil)
             }
         case .shadow:
             styledText(uniform: nil)
-                .shadow(color: edge.opacity(0.9), radius: fontSize * 0.08, y: fontSize * 0.04)
+                .shadow(color: edge.opacity(0.9), radius: fontSize * 0.08 * thickness, y: fontSize * 0.04 * thickness)
         case .outline:
             // SwiftUI has no text stroke. Eight offset copies behind the text give a
             // clean outline at caption sizes, and cost nothing noticeable.
-            let w = max(1, fontSize * 0.06)
+            let w = max(1, fontSize * 0.06 * thickness)
             ZStack {
                 if !bare {
                     ForEach(0..<8, id: \.self) { i in
@@ -187,6 +260,43 @@ struct StyledCaption: View {
                 }
                 styledText(uniform: nil)
             }
+        case .glow:
+            // A wide halo and a tight one, both blurred copies in the edge colour.
+            ZStack {
+                if !bare {
+                    styledText(uniform: edge)
+                        .blur(radius: fontSize * 0.25 * thickness)
+                        .opacity(0.9)
+                    styledText(uniform: edge)
+                        .blur(radius: fontSize * 0.08 * thickness)
+                }
+                styledText(uniform: nil)
+            }
+        case .offsetShadow:
+            // A hard, unblurred copy shifted down and right.
+            ZStack {
+                if !bare {
+                    styledText(uniform: edge)
+                        .offset(x: fontSize * 0.06 * thickness, y: fontSize * 0.06 * thickness)
+                }
+                styledText(uniform: nil)
+            }
+        case .splitColour:
+            // Cyan to the left, pink to the right, like a misregistered print.
+            ZStack {
+                if !bare {
+                    styledText(uniform: Color(hex: "#00E5FF"))
+                        .offset(x: -fontSize * 0.04 * thickness)
+                        .opacity(0.85)
+                    styledText(uniform: Color(hex: "#FF2D75"))
+                        .offset(x: fontSize * 0.04 * thickness)
+                        .opacity(0.85)
+                }
+                styledText(uniform: nil)
+            }
+        case .highlighter:
+            // The stripe behind each line is drawn by the text renderer.
+            styledText(uniform: nil)
         case .box:
             let inset = Self.textInset(style, fontSize: fontSize)
             styledText(uniform: nil)
@@ -203,11 +313,15 @@ struct StyledCaption: View {
     private func styledText(uniform: Color?) -> some View {
         let text = coloured(uniform: uniform)
             .font(effectiveStyle.font(size: fontSize))
+            .tracking(fontSize * style.tracking)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
         if uniform == nil, usesRenderer {
-            text.textRenderer(CaptionTextRenderer(fill: style.textFill, onlyWord: onlyWord, probe: probe,
-                                                  reach: fontSize * 0.5))
+            text.textRenderer(CaptionTextRenderer(
+                fill: style.textFill, onlyWord: onlyWord, probe: probe, reach: fontSize * 0.5,
+                fontSize: fontSize,
+                marker: style.background == .highlighter ? style.boxColours : nil,
+                wordBox: style.animation == .wordBox ? Color(hex: style.highlightColor) : nil))
         } else {
             text
         }
@@ -217,7 +331,8 @@ struct StyledCaption: View {
         let base = Color(hex: style.textColor)
         // Painted by the renderer: the gradient, and each word's fill.
         let painted = uniform == nil && usesRenderer
-        guard style.needsWordTimes, let words else {
+        // One word at a time draws a single word, so it has no words to tell apart.
+        guard style.needsWordTimes, style.animation != .oneWord, let words else {
             let whole = Text(shown).foregroundStyle(uniform ?? base)
             return painted ? whole.customAttribute(CaptionWordRun(index: 0, fill: 1, baseOpacity: 1)) : whole
         }
@@ -235,7 +350,9 @@ struct StyledCaption: View {
                 let spoken = (word?.start ?? 0) <= elapsed
                 let current = word.map { elapsed >= $0.start && elapsed < $0.end } ?? false
                 var colour = uniform ?? base
-                var run: CaptionWordRun? = painted ? CaptionWordRun(index: i, fill: 1, baseOpacity: 1) : nil
+                // "Box each word" boxes the word being said; in a pause none is boxed.
+                let boxed = style.animation == .wordBox && current
+                var run: CaptionWordRun? = painted ? CaptionWordRun(index: i, fill: 1, baseOpacity: 1, boxed: boxed) : nil
                 if style.animation == .typewriter, !spoken {
                     colour = .clear      // keeps the layout still while words appear
                     run = nil
@@ -264,6 +381,8 @@ struct CaptionWordRun: TextAttribute {
     var index: Int
     var fill: Double
     var baseOpacity: Double
+    /// "Box each word": this is the word being said, so the renderer boxes it.
+    var boxed = false
 }
 
 /// Where each word's glyphs were drawn, in the text's own coordinates. The export
@@ -278,8 +397,9 @@ final class CaptionRunProbe: @unchecked Sendable {
 }
 
 /// Paints marked words with the caption's fill, solid or a gradient across the whole
-/// caption, and fills each word from where reading starts as it is said. Unmarked text
-/// (spaces, a highlighted word) is drawn as it is.
+/// caption, and fills each word from where reading starts as it is said. It also draws
+/// what sits behind the words: a marker stripe behind each line and the box round the
+/// word being said. Unmarked text (spaces, a highlighted word) is drawn as it is.
 struct CaptionTextRenderer: TextRenderer {
     var fill: [Color]
     var onlyWord: Int?
@@ -288,10 +408,39 @@ struct CaptionTextRenderer: TextRenderer {
     /// SwiftUI as `displayPadding`: ImageRenderer shifts the whole drawing right by it,
     /// which pushed the export's captions off centre and cut their last letter.
     var reach: CGFloat
+    var fontSize: CGFloat
+    /// The marker stripe's colours behind each line, one or a gradient. Nil draws none.
+    var marker: [Color]? = nil
+    /// The colour of the box round a word marked `boxed`. Nil draws none.
+    var wordBox: Color? = nil
 
     func draw(layout: Text.Layout, in ctx: inout GraphicsContext) {
         let bounds = layout.reduce(CGRect.null) { $0.union($1.typographicBounds.rect) }
         guard !bounds.isNull else { return }
+        // Behind the words, so every stripe and box is down before any text. Not in the
+        // export's per-word fills, which hold only the fill.
+        if onlyWord == nil {
+            if let marker {
+                for line in layout {
+                    let rect = line.typographicBounds.rect
+                    let bar = CGRect(x: rect.minX - fontSize * 0.22, y: rect.minY,
+                                     width: rect.width + fontSize * 0.44, height: rect.height)
+                    let shading: GraphicsContext.Shading = marker.count > 1
+                        ? .linearGradient(Gradient(colors: marker), startPoint: CGPoint(x: bar.minX, y: bar.midY),
+                                          endPoint: CGPoint(x: bar.maxX, y: bar.midY))
+                        : .color(marker.first ?? .clear)
+                    ctx.fill(Path(roundedRect: bar, cornerRadius: fontSize * 0.12), with: shading)
+                }
+            }
+            if let wordBox {
+                for line in layout {
+                    for run in line where run[CaptionWordRun.self]?.boxed == true {
+                        let box = run.typographicBounds.rect.insetBy(dx: -fontSize * 0.14, dy: -fontSize * 0.04)
+                        ctx.fill(Path(roundedRect: box, cornerRadius: fontSize * 0.18), with: .color(wordBox))
+                    }
+                }
+            }
+        }
         let shading: GraphicsContext.Shading = fill.count > 1
             ? .linearGradient(Gradient(colors: fill), startPoint: CGPoint(x: bounds.minX, y: bounds.midY),
                               endPoint: CGPoint(x: bounds.maxX, y: bounds.midY))

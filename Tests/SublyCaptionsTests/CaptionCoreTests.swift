@@ -1307,9 +1307,8 @@ struct CaptionStyleTests {
         for animation in [CaptionStyle.Animation.fade, .pop, .slideUp] {
             let start = CaptionAnimationTiming.transform(animation, elapsed: 0, duration: 2)
             let middle = CaptionAnimationTiming.transform(animation, elapsed: 1, duration: 2)
-            #expect(start.opacity < 0.01 || start.scale < 0.9 || start.offset > 0.1, "\(animation) does not animate in")
-            #expect(abs(middle.opacity - 1) < 1e-9 && abs(middle.scale - 1) < 1e-9 && abs(middle.offset) < 1e-9,
-                    "\(animation) not settled mid-caption")
+            #expect(start.opacity < 0.01 || start.scale < 0.9 || start.offsetY > 0.1, "\(animation) does not animate in")
+            #expect(middle == .identity, "\(animation) not settled mid-caption")
         }
         let end = CaptionAnimationTiming.transform(.fade, elapsed: 2, duration: 2)
         #expect(end.opacity < 0.01)
@@ -1343,10 +1342,15 @@ struct CaptionStyleTests {
 
     @Test("The looks that shipped before keep every new setting off")
     func olderLooksUnchanged() {
-        for template in CaptionStyle.Template.allCases where template != .gradientPop {
+        let shipped: [CaptionStyle.Template] = [.clean, .boldPop, .karaoke, .boxed, .minimal, .typewriter]
+        for template in shipped {
             let style = CaptionStyle.preset(template)
             #expect(!style.italic && style.textGradient == nil && style.boxGradient == nil, "\(template)")
             #expect(!style.highlightsSpokenWord && style.edgeColor == "#000000", "\(template)")
+        }
+        for template in shipped + [.gradientPop] {
+            let style = CaptionStyle.preset(template)
+            #expect(style.animationSpeed == 1 && style.tracking == 0 && style.edgeWidth == 1, "\(template)")
         }
         #expect(CaptionStyle.default == CaptionStyle.preset(.clean))
         #expect(CaptionStyle.preset(.karaoke).highlightsCurrentWord)
@@ -1404,7 +1408,194 @@ struct CaptionStyleTests {
         let middle = fills(at: (words[1].start + words[1].end) / 2)
         #expect(middle[0] == 1 && abs(middle[1] - 0.5) < 1e-9 && middle[2] == 0)
         #expect(fills(at: 1.2) == [1, 1, 1])
-        #expect(CaptionAnimationTiming.transform(.wordFill, elapsed: 0, duration: 1.2) == (1, 1, 0))
+        #expect(CaptionAnimationTiming.transform(.wordFill, elapsed: 0, duration: 1.2) == .identity)
+    }
+}
+
+@Suite("More caption looks, motion and settings")
+struct CaptionLookTests {
+    private func decode(_ json: String) throws -> CaptionStyle {
+        try JSONDecoder().decode(CaptionStyle.self, from: Data(json.utf8))
+    }
+
+    @Test("Every look is saved and opened again exactly, and sits above the Reels buttons")
+    func everyPresetRoundTrips() throws {
+        #expect(CaptionStyle.Template.allCases.count == 22)
+        for template in CaptionStyle.Template.allCases {
+            let style = CaptionStyle.preset(template)
+            let back = try JSONDecoder().decode(CaptionStyle.self, from: JSONEncoder().encode(style))
+            #expect(back == style, "\(template)")
+            #expect(style.position <= 0.78, "\(template) sits where Reels covers it")
+            #expect(!template.summary.isEmpty && !template.displayName.isEmpty)
+        }
+        let names = CaptionStyle.Template.allCases.map(\.displayName)
+        #expect(Set(names).count == names.count)
+    }
+
+    @Test("A style saved before speed, spacing and thickness opens with them at normal")
+    func olderStyleGetsDefaults() throws {
+        // As saved by Subly 1.3: everything but the three newest settings.
+        let json = ##"{"template":"gradientPop","font":"instrumentSerif","bold":false,"size":0.07,"textColor":"#FFFFFF","highlightColor":"#FFD60A","boxColor":"#00000099","background":"shadow","position":0.7,"uppercase":false,"animation":"wordFill","italic":true,"textGradient":["#AE92FF","#FF70C9","#FFAD62"],"highlightsSpokenWord":false,"edgeColor":"#000000"}"##
+        let style = try decode(json)
+        #expect(style == CaptionStyle.preset(.gradientPop))
+        #expect(style.animationSpeed == 1 && style.tracking == 0 && style.edgeWidth == 1)
+    }
+
+    @Test("Nonsense speed, spacing and thickness fall back or stay in range")
+    func newSettingsAreSanitised() throws {
+        let broken = try decode(##"{"template":"punch","animationSpeed":0,"tracking":5,"edgeWidth":-1}"##)
+        #expect(broken.template == .punch)
+        #expect(broken.animationSpeed == 1)
+        #expect(broken.tracking == CaptionStyle.trackingRange.upperBound)
+        #expect(broken.edgeWidth == CaptionStyle.edgeWidthRange.lowerBound)
+        let text = try decode(##"{"animationSpeed":"fast","tracking":"wide","edgeWidth":null}"##)
+        #expect(text.animationSpeed == 1 && text.tracking == 0 && text.edgeWidth == 1)
+    }
+
+    @Test("Fonts, backgrounds and animations that arrived later are named and sorted out")
+    func newCases() {
+        #expect(CaptionStyle.Font.allCases.count == 16 && CaptionStyle.Background.allCases.count == 8)
+        #expect(!CaptionStyle.Font.impact.hasBold && !CaptionStyle.Font.instrumentSerif.hasBold)
+        for font in CaptionStyle.Font.allCases where font != .impact && font != .instrumentSerif {
+            #expect(font.hasBold, "\(font)")
+        }
+        #expect(CaptionStyle.Background.splitColour.displayName == "Split colour")
+        #expect(CaptionStyle.Background.highlighter.displayName == "Marker")
+        #expect(CaptionStyle.Animation.tilt.displayName == "Tilt in")
+        let perWord: Set<CaptionStyle.Animation> = [.wordHighlight, .typewriter, .wordFill, .wordBox, .oneWord]
+        for animation in CaptionStyle.Animation.allCases {
+            #expect(animation.isPerWord == perWord.contains(animation), "\(animation)")
+            // Entrances and per-word effects never overlap, and nothing moves without an entrance.
+            #expect(!(animation.isEntrance && animation.isPerWord))
+            if animation.moves { #expect(animation.isEntrance, "\(animation)") }
+        }
+        #expect(CaptionStyle.Animation.fade.isEntrance && !CaptionStyle.Animation.fade.moves)
+        #expect(CaptionStyle.Animation.flicker.moves && !CaptionStyle.Animation.none.isEntrance)
+    }
+
+    @Test("Box each word keeps the spoken word's own colour; One word shows only that word")
+    func wordBoxAndOneWord() {
+        var style = CaptionStyle.preset(.wordBox)
+        #expect(style.needsWordTimes && !style.highlightsCurrentWord)
+        style.highlightsSpokenWord = true
+        #expect(!style.highlightsCurrentWord, "the box is drawn in the highlight colour")
+        style.animation = .oneWord
+        #expect(style.needsWordTimes && !style.highlightsCurrentWord)
+        #expect(CaptionStyle.preset(.punch).highlightsCurrentWord)
+        #expect(CaptionStyle.preset(.rainbow).textGradient?.count == 6)
+        #expect(CaptionStyle.preset(.headline).boxGradient == CaptionStyle.boxGradients.first { $0.name == "Breaking" }?.colours)
+        #expect(CaptionStyle.preset(.cinematic).animationSpeed == 0.5 && CaptionStyle.preset(.cinematic).tracking == 0.25)
+    }
+
+    @Test("The new gradients are there")
+    func newGradients() {
+        for name in ["Rainbow", "Candy", "Neon"] {
+            #expect(CaptionStyle.textGradients.contains { $0.name == name }, "\(name)")
+        }
+        for name in ["Royal", "Breaking", "Candy"] {
+            #expect(CaptionStyle.boxGradients.contains { $0.name == name }, "\(name)")
+        }
+        #expect(CaptionStyle.textGradients.first { $0.name == "Rainbow" }?.colours
+                == ["#FF5E5E", "#FFB443", "#FFF05A", "#4BE37C", "#4FC3FF", "#B07CFF"])
+    }
+
+    @Test("Every animation has settled by the middle of a caption, at every speed")
+    func settledAtEverySpeed() {
+        for animation in CaptionStyle.Animation.allCases {
+            for speed in [0.5, 1, 1.8] {
+                let pose = CaptionAnimationTiming.transform(animation, elapsed: 2, duration: 4, speed: speed)
+                #expect(pose == .identity, "\(animation) at \(speed)")
+            }
+        }
+    }
+
+    @Test("Every whole-caption animation starts out of the way and ends hidden or in place")
+    func entrancesStartAway() {
+        for animation in CaptionStyle.Animation.allCases where animation.isEntrance {
+            let start = CaptionAnimationTiming.transform(animation, elapsed: 0, duration: 4)
+            #expect(start != .identity, "\(animation) does not animate in")
+            let end = CaptionAnimationTiming.transform(animation, elapsed: 4, duration: 4)
+            #expect(end.opacity < 0.01 || animation == .pop, "\(animation) does not go away")
+        }
+        // Per-word looks leave the whole caption alone.
+        for animation in CaptionStyle.Animation.allCases where animation.isPerWord {
+            #expect(CaptionAnimationTiming.transform(animation, elapsed: 0, duration: 4) == .identity)
+        }
+    }
+
+    @Test("Slow keeps a bounce moving after Normal has settled; Fast settles sooner")
+    func speed() {
+        let normal = CaptionAnimationTiming.transform(.bounce, elapsed: 0.6, duration: 4)
+        let slow = CaptionAnimationTiming.transform(.bounce, elapsed: 0.6, duration: 4, speed: 0.5)
+        #expect(normal == .identity)
+        #expect(abs(slow.offsetY) > 0.1)
+        let fadeFast = CaptionAnimationTiming.transform(.fade, elapsed: 0.09, duration: 4, speed: 2)
+        #expect(abs(fadeFast.opacity - 1) < 1e-12)
+        // The exit takes as long as the speed says too.
+        let slowExit = CaptionAnimationTiming.transform(.fade, elapsed: 3.85, duration: 4, speed: 0.5)
+        #expect(abs(slowExit.opacity - 0.5) < 1e-9)
+        #expect(CaptionAnimationTiming.entranceDuration(.bounce) == 0.5)
+    }
+
+    @Test("Fade, Pop and Slide up are exactly what they were before speed existed")
+    func olderMotionUnchanged() {
+        func near(_ a: Double, _ b: Double) -> Bool { abs(a - b) < 1e-12 }
+        // Fade: halfway in, and halfway out.
+        let fadeIn = CaptionAnimationTiming.transform(.fade, elapsed: 0.09, duration: 2)
+        #expect(near(fadeIn.opacity, 0.5) && fadeIn.scale == 1 && fadeIn.offsetX == 0 && fadeIn.offsetY == 0 && fadeIn.rotation == 0)
+        #expect(near(CaptionAnimationTiming.transform(.fade, elapsed: 1.925, duration: 2).opacity, 0.5))
+        // Pop: grows to 1.08, then settles; shows twice as fast as it grows.
+        for (t, scale, opacity) in [(0.054, 0.7 + 0.38 * (0.3 / 0.7), 0.6),
+                                    (0.09, 0.7 + 0.38 * (0.5 / 0.7), 1.0),
+                                    (0.162, 1.08 - 0.08 * (0.2 / 0.3), 1.0)] {
+            let pose = CaptionAnimationTiming.transform(.pop, elapsed: t, duration: 2)
+            #expect(near(pose.scale, scale) && near(pose.opacity, opacity) && pose.offsetY == 0, "pop at \(t)")
+        }
+        // Slide up: eased rise of 0.6 text heights.
+        for (t, offset, opacity) in [(0.045, 0.6 * 0.421875, 0.375), (0.09, 0.6 * 0.125, 0.75)] {
+            let pose = CaptionAnimationTiming.transform(.slideUp, elapsed: t, duration: 2)
+            #expect(near(pose.offsetY, offset) && near(pose.opacity, opacity) && pose.scale == 1 && pose.offsetX == 0, "slide at \(t)")
+        }
+        #expect(near(CaptionAnimationTiming.transform(.slideUp, elapsed: 1.925, duration: 2).opacity, 0.5))
+    }
+
+    @Test("The new entrances follow their formulas")
+    func newMotion() {
+        func near(_ a: Double, _ b: Double) -> Bool { abs(a - b) < 1e-9 }
+        let slideIn = CaptionAnimationTiming.transform(.slideIn, elapsed: 0, duration: 4)
+        #expect(near(slideIn.offsetX, -1.2) && slideIn.opacity == 0)
+        let zoom = CaptionAnimationTiming.transform(.zoomIn, elapsed: 0, duration: 4)
+        #expect(near(zoom.scale, 1.35) && zoom.opacity == 0)
+        let tilt = CaptionAnimationTiming.transform(.tilt, elapsed: 0, duration: 4)
+        #expect(near(tilt.rotation, -12) && near(tilt.scale, 0.9))
+        let drop = CaptionAnimationTiming.transform(.drop, elapsed: 0, duration: 4)
+        #expect(near(drop.offsetY, -1.2))
+        // The drop lands, then bounces back up a little before settling.
+        let landed = CaptionAnimationTiming.transform(.drop, elapsed: 0.45 * 0.9, duration: 4)
+        #expect(landed.offsetY < 0 && landed.offsetY > -0.1)
+        let bounce = CaptionAnimationTiming.transform(.bounce, elapsed: 0, duration: 4)
+        #expect(near(bounce.offsetY, 0.8))
+        // Flicker jumps between six levels while it comes in.
+        let levels = (0..<6).map { CaptionAnimationTiming.transform(.flicker, elapsed: (Double($0) + 0.5) / 6 * 0.35, duration: 4).opacity }
+        #expect(levels == [0, 0.9, 0.2, 1, 0.5, 1])
+        // Shake leans both ways and ends still.
+        let swings = stride(from: 0.0, to: 0.3, by: 0.01).map { CaptionAnimationTiming.transform(.shake, elapsed: $0, duration: 4).offsetX }
+        #expect(swings.contains { $0 > 0.02 } && swings.contains { $0 < -0.02 })
+    }
+
+    @Test("The word shown is the last one that has started, the first before any has")
+    func shownWord() {
+        let words = [CaptionAnimationTiming.Word(text: "one", start: 0.5, end: 0.9),
+                     CaptionAnimationTiming.Word(text: "two", start: 1.0, end: 1.4),
+                     CaptionAnimationTiming.Word(text: "three", start: 1.4, end: 2)]
+        #expect(CaptionAnimationTiming.shownWord(words, elapsed: 0) == 0, "before the first word")
+        #expect(CaptionAnimationTiming.shownWord(words, elapsed: 0.5) == 0)
+        #expect(CaptionAnimationTiming.shownWord(words, elapsed: 0.7) == 0, "during a word")
+        #expect(CaptionAnimationTiming.shownWord(words, elapsed: 0.95) == 0, "in a pause it holds the last word")
+        #expect(CaptionAnimationTiming.shownWord(words, elapsed: 1.2) == 1)
+        #expect(CaptionAnimationTiming.shownWord(words, elapsed: 1.4) == 2, "a word that starts as another ends")
+        #expect(CaptionAnimationTiming.shownWord(words, elapsed: 9) == 2, "after the last word")
+        #expect(CaptionAnimationTiming.shownWord([], elapsed: 1) == nil)
     }
 }
 
@@ -1462,10 +1653,12 @@ struct BlankLineWriterTests {
 struct LenientDecodingTests {
     @Test("A caption style with a look this version doesn't know still opens")
     func unknownTemplate() throws {
-        let json = ##"{"template":"neon","font":"system","bold":true,"size":0.05,"textColor":"#FFFFFF","highlightColor":"#FFD60A","boxColor":"#000000","background":"glow","position":0.3,"uppercase":false,"animation":"bounce"}"##
+        let json = ##"{"template":"hologram","font":"wingdings","bold":true,"size":0.05,"textColor":"#FFFFFF","highlightColor":"#FFD60A","boxColor":"#000000","background":"sparkle","position":0.3,"uppercase":false,"animation":"wobble"}"##
         let style = try JSONDecoder().decode(CaptionStyle.self, from: Data(json.utf8))
         #expect(style.template == .clean)
+        #expect(style.font == CaptionStyle.preset(.clean).font)
         #expect(style.background == CaptionStyle.preset(.clean).background)
+        #expect(style.animation == CaptionStyle.preset(.clean).animation)
         #expect(style.position == 0.3)
         #expect(style.size == 0.05)
     }

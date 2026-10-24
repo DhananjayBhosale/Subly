@@ -164,10 +164,9 @@ struct SubtitleOverlay: View {
                 // Paused, a caption is shown whole. Drawn at the moment it was stopped, the
                 // first frame of a fade or the start of word-by-word looked like no caption
                 // at all — which is where the editor lands after making captions.
-                if !model.clock.isPlaying, [.fade, .pop, .slideUp, .typewriter].contains(style.animation) {
+                if !model.clock.isPlaying, style.animation.isEntrance || style.animation == .typewriter {
                     s.animation = .none
-                } else if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
-                          style.animation == .pop || style.animation == .slideUp {
+                } else if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, style.animation.moves {
                     s.animation = .fade
                 }
                 return s

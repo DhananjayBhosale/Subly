@@ -256,6 +256,26 @@ private struct LookPane: View {
                 })
     }
 
+    private static let wholeCaptionAnimations: [CaptionStyle.Animation] =
+        [.none, .fade, .pop, .slideUp, .slideIn, .zoomIn, .bounce, .drop, .tilt, .flicker, .shake]
+    private static let wordByWordAnimations: [CaptionStyle.Animation] =
+        [.wordHighlight, .typewriter, .wordFill, .wordBox, .oneWord]
+
+    /// What the colour of the outline, shadow or glow is called, for the backgrounds that have one.
+    private var edgeColourTitle: String? {
+        switch style.background {
+        case .outline:                return "Outline colour"
+        case .shadow, .offsetShadow:  return "Shadow colour"
+        case .glow:                   return "Glow colour"
+        case .none, .box, .highlighter, .splitColour: return nil
+        }
+    }
+
+    /// The backgrounds drawn with an edge that can be thinner or thicker.
+    private var hasThickness: Bool {
+        [.outline, .shadow, .glow, .offsetShadow, .splitColour].contains(style.background)
+    }
+
     var body: some View {
         Form {
             Section {
@@ -279,6 +299,11 @@ private struct LookPane: View {
                         .labelsHidden()
                         .accessibilityValue("\(Int((style.size / 0.045 * 100).rounded())) percent of standard size")
                 }
+                LabeledContent("Letter spacing") {
+                    Slider(value: binding(\.tracking), in: CaptionStyle.trackingRange, step: 0.01) { Text("Letter spacing") }
+                        .labelsHidden()
+                        .accessibilityValue("\(Int((style.tracking * 100).rounded())) percent of the text size between letters")
+                }
                 Picker("Font", selection: binding(\.font)) {
                     ForEach(CaptionStyle.Font.allCases) { Text($0.displayName).tag($0) }
                 }
@@ -296,7 +321,7 @@ private struct LookPane: View {
                     ColourRow(title: "Before it's said", selection: colour(\.textColor))
                         .help("Words still to be said show in this colour, faded")
                 }
-                if style.animation != .wordHighlight, style.animation != .wordFill {
+                if ![.wordHighlight, .wordFill, .wordBox, .oneWord].contains(style.animation) {
                     Toggle("Highlight the word being said", isOn: binding(\.highlightsSpokenWord))
                         .toggleStyle(.checkbox)
                 }
@@ -309,16 +334,39 @@ private struct LookPane: View {
                 Picker("Background", selection: binding(\.background)) {
                     ForEach(CaptionStyle.Background.allCases) { Text($0.displayName).tag($0) }
                 }
-                if style.background == .box {
-                    FillRows(title: "Box colour", solid: colour(\.boxColor), gradient: binding(\.boxGradient),
+                if style.background == .box || style.background == .highlighter {
+                    FillRows(title: style.background == .box ? "Box colour" : "Marker colour",
+                             solid: colour(\.boxColor), gradient: binding(\.boxGradient),
                              presets: CaptionStyle.boxGradients, swatches: false)
                 }
-                if style.background == .outline || style.background == .shadow {
-                    ColorPicker(style.background == .outline ? "Outline colour" : "Shadow colour",
-                                selection: colour(\.edgeColor), supportsOpacity: false)
+                if let title = edgeColourTitle {
+                    ColorPicker(title, selection: colour(\.edgeColor), supportsOpacity: false)
+                }
+                if hasThickness {
+                    LabeledContent("Thickness") {
+                        Slider(value: binding(\.edgeWidth), in: CaptionStyle.edgeWidthRange, step: 0.1) { Text("Thickness") }
+                            .labelsHidden()
+                            .accessibilityValue("\(Int((style.edgeWidth * 100).rounded())) percent of the usual thickness")
+                    }
                 }
                 Picker("Animation", selection: binding(\.animation)) {
-                    ForEach(CaptionStyle.Animation.allCases) { Text($0.displayName).tag($0) }
+                    Section("Whole caption") {
+                        ForEach(Self.wholeCaptionAnimations) { Text($0.displayName).tag($0) }
+                    }
+                    Section("Word by word") {
+                        ForEach(Self.wordByWordAnimations) { Text($0.displayName).tag($0) }
+                    }
+                }
+                if style.animation.isEntrance {
+                    Picker("Speed", selection: binding(\.animationSpeed)) {
+                        Text("Slow").tag(0.5)
+                        Text("Normal").tag(1.0)
+                        Text("Fast").tag(1.8)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                if style.animation == .wordBox {
+                    ColourRow(title: "Word box colour", selection: colour(\.highlightColor))
                 }
             }
 
@@ -450,14 +498,15 @@ private struct FillRows: View {
         .pickerStyle(.segmented)
         if let stops = gradient {
             LabeledContent("Gradient") {
-                HStack(spacing: 6) {
+                // Narrow enough for eight in the panel's width.
+                HStack(spacing: 4) {
                     ForEach(presets) { preset in
                         let isOn = stops == preset.colours
                         Button { gradient = preset.colours } label: {
                             Capsule()
                                 .fill(LinearGradient(colors: preset.colours.map(Color.init(hex:)),
                                                      startPoint: .leading, endPoint: .trailing))
-                                .frame(width: 26, height: 16)
+                                .frame(width: 22, height: 16)
                                 .overlay { Capsule().strokeBorder(.separator, lineWidth: 0.5) }
                                 .padding(2)
                                 .overlay { Capsule().strokeBorder(isOn ? Color.accentColor : .clear, lineWidth: 2) }
@@ -482,7 +531,7 @@ private struct FillRows: View {
         } else if swatches {
             ColourRow(title: "Text colour", selection: $solid)
         } else {
-            ColorPicker("Box colour", selection: $solid, supportsOpacity: true)
+            ColorPicker(title, selection: $solid, supportsOpacity: true)
         }
     }
 }

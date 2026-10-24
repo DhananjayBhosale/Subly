@@ -10,6 +10,8 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
 
     public enum Template: String, Codable, Sendable, CaseIterable, Identifiable {
         case clean, boldPop, karaoke, boxed, minimal, typewriter, gradientPop
+        case punch, oneWord, neon, highlighter, wordBox, retro, drop, cinematic
+        case handwritten, comic, terminal, headline, glitch, candy, rainbow
         public var id: String { rawValue }
         public var displayName: String {
             switch self {
@@ -20,6 +22,21 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
             case .minimal:    return "Minimal"
             case .typewriter: return "Typewriter"
             case .gradientPop: return "Gradient Pop"
+            case .punch:       return "Punch"
+            case .oneWord:     return "One Word"
+            case .neon:        return "Neon"
+            case .highlighter: return "Highlighter"
+            case .wordBox:     return "Word Box"
+            case .retro:       return "Retro"
+            case .drop:        return "Drop"
+            case .cinematic:   return "Cinematic"
+            case .handwritten: return "Handwritten"
+            case .comic:       return "Comic"
+            case .terminal:    return "Terminal"
+            case .headline:    return "Headline"
+            case .glitch:      return "Glitch"
+            case .candy:       return "Candy"
+            case .rainbow:     return "Rainbow"
             }
         }
         /// One line on what it is for, shown under the picker.
@@ -32,12 +49,29 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
             case .minimal:    return "Plain white with a shadow, fading in and out."
             case .typewriter: return "Words appear one by one as they are spoken."
             case .gradientPop: return "Serif italic words fill with colour as they are spoken."
+            case .punch:       return "Heavy capitals that zoom in fast, the spoken word in yellow."
+            case .oneWord:     return "One huge word at a time, in step with the speech."
+            case .neon:        return "A glowing pink sign that flickers on."
+            case .highlighter: return "Dark text on a yellow marker stripe that slides in."
+            case .wordBox:     return "A purple box jumps from word to word as each is spoken."
+            case .retro:       return "Warm capitals with a hard orange shadow that pop in."
+            case .drop:        return "Yellow outlined text that drops in and bounces."
+            case .cinematic:   return "Wide-spaced small capitals that fade in slowly, like film titles."
+            case .handwritten: return "Marker lettering that tilts into place."
+            case .comic:       return "Black lettering on a white speech box that pops up."
+            case .terminal:    return "Green computer text typed word by word on a dark screen."
+            case .headline:    return "Capitals on a red news banner that slides in from the side."
+            case .glitch:      return "Capitals with a cyan and pink split that shake in."
+            case .candy:       return "White text on a pink and purple box that pops in fast."
+            case .rainbow:     return "Rainbow-coloured text that bounces in."
             }
         }
     }
 
     public enum Font: String, Codable, Sendable, CaseIterable, Identifiable {
         case system, rounded, serif, condensed, instrumentSerif
+        case monospaced, avenirNext, futura, impact, markerFelt, chalkboard
+        case americanTypewriter, didot, georgia, rockwell, copperplate
         public var id: String { rawValue }
         public var displayName: String {
             switch self {
@@ -46,14 +80,25 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
             case .serif:           return "Serif"
             case .condensed:       return "Condensed"
             case .instrumentSerif: return "Instrument Serif"
+            case .monospaced:      return "Monospaced"
+            case .avenirNext:      return "Avenir Next"
+            case .futura:          return "Futura"
+            case .impact:          return "Impact"
+            case .markerFelt:      return "Marker Felt"
+            case .chalkboard:      return "Chalkboard"
+            case .americanTypewriter: return "American Typewriter"
+            case .didot:           return "Didot"
+            case .georgia:         return "Georgia"
+            case .rockwell:        return "Rockwell"
+            case .copperplate:     return "Copperplate"
             }
         }
-        /// Instrument Serif comes in one weight, so Bold does nothing for it.
-        public var hasBold: Bool { self != .instrumentSerif }
+        /// Instrument Serif and Impact come in one weight, so Bold does nothing for them.
+        public var hasBold: Bool { self != .instrumentSerif && self != .impact }
     }
 
     public enum Background: String, Codable, Sendable, CaseIterable, Identifiable {
-        case none, shadow, outline, box
+        case none, shadow, outline, box, glow, offsetShadow, highlighter, splitColour
         public var id: String { rawValue }
         public var displayName: String {
             switch self {
@@ -61,12 +106,17 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
             case .shadow:  return "Shadow"
             case .outline: return "Outline"
             case .box:     return "Box"
+            case .glow:    return "Glow"
+            case .offsetShadow: return "Offset shadow"
+            case .highlighter:  return "Marker"
+            case .splitColour:  return "Split colour"
             }
         }
     }
 
     public enum Animation: String, Codable, Sendable, CaseIterable, Identifiable {
         case none, fade, pop, slideUp, wordHighlight, typewriter, wordFill
+        case slideIn, zoomIn, bounce, drop, tilt, flicker, shake, wordBox, oneWord
         public var id: String { rawValue }
         public var displayName: String {
             switch self {
@@ -77,10 +127,37 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
             case .wordHighlight: return "Highlight each word"
             case .typewriter:    return "Word by word"
             case .wordFill:      return "Fill each word"
+            case .slideIn:       return "Slide in"
+            case .zoomIn:        return "Zoom in"
+            case .bounce:        return "Bounce"
+            case .drop:          return "Drop"
+            case .tilt:          return "Tilt in"
+            case .flicker:       return "Flicker"
+            case .shake:         return "Shake"
+            case .wordBox:       return "Box each word"
+            case .oneWord:       return "One word at a time"
             }
         }
         /// True when the animation needs to know when each word is spoken.
-        public var isPerWord: Bool { self == .wordHighlight || self == .typewriter || self == .wordFill }
+        public var isPerWord: Bool {
+            self == .wordHighlight || self == .typewriter || self == .wordFill || self == .wordBox || self == .oneWord
+        }
+        /// The whole caption comes in as one: these have an entrance, and Speed sets how
+        /// long it takes.
+        public var isEntrance: Bool {
+            switch self {
+            case .fade, .pop, .slideUp, .slideIn, .zoomIn, .bounce, .drop, .tilt, .flicker, .shake: return true
+            case .none, .wordHighlight, .typewriter, .wordFill, .wordBox, .oneWord: return false
+            }
+        }
+        /// True when the caption moves or changes size, which Reduce Motion replaces
+        /// with a fade.
+        public var moves: Bool {
+            switch self {
+            case .pop, .slideUp, .slideIn, .zoomIn, .bounce, .drop, .tilt, .shake, .flicker: return true
+            case .none, .fade, .wordHighlight, .typewriter, .wordFill, .wordBox, .oneWord: return false
+            }
+        }
     }
 
     public var template: Template
@@ -107,20 +184,33 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
     /// The word being spoken is drawn in `highlightColor`, whatever the animation.
     /// Karaoke ("Highlight each word") always does this.
     public var highlightsSpokenWord: Bool
-    /// The colour of the outline and the shadow.
+    /// The colour of the outline, shadow, glow and offset shadow.
     public var edgeColor: String
+    /// How fast whole-caption entrances play: 0.5 is Slow, 1 Normal, 1.8 Fast. It
+    /// divides the entrance and exit times.
+    public var animationSpeed: Double
+    /// Space between letters, as a fraction of the text size.
+    public var tracking: Double
+    /// How thick the outline, shadow, glow, offset shadow and split colour are, as a
+    /// multiple of their usual thickness.
+    public var edgeWidth: Double
+
+    public static let trackingRange = -0.05...0.3
+    public static let edgeWidthRange = 0.5...2.5
 
     public init(template: Template, font: Font, bold: Bool, size: Double, textColor: String,
                 highlightColor: String, boxColor: String, background: Background,
                 position: Double, uppercase: Bool, animation: Animation,
                 italic: Bool = false, textGradient: [String]? = nil, boxGradient: [String]? = nil,
-                highlightsSpokenWord: Bool = false, edgeColor: String = "#000000") {
+                highlightsSpokenWord: Bool = false, edgeColor: String = "#000000",
+                animationSpeed: Double = 1, tracking: Double = 0, edgeWidth: Double = 1) {
         self.template = template; self.font = font; self.bold = bold; self.size = size
         self.textColor = textColor; self.highlightColor = highlightColor; self.boxColor = boxColor
         self.background = background; self.position = position
         self.uppercase = uppercase; self.animation = animation
         self.italic = italic; self.textGradient = textGradient; self.boxGradient = boxGradient
         self.highlightsSpokenWord = highlightsSpokenWord; self.edgeColor = edgeColor
+        self.animationSpeed = animationSpeed; self.tracking = tracking; self.edgeWidth = edgeWidth
     }
 
     public static let `default` = preset(.clean)
@@ -128,6 +218,7 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
     private enum CodingKeys: String, CodingKey {
         case template, font, bold, size, textColor, highlightColor, boxColor, background, position, uppercase, animation
         case italic, textGradient, boxGradient, highlightsSpokenWord, edgeColor
+        case animationSpeed, tracking, edgeWidth
     }
 
     /// Each setting falls back to the Clean look on its own. A style saved by a newer
@@ -156,6 +247,10 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
         boxGradient = Self.validGradient(value(.boxGradient, base.boxGradient))
         highlightsSpokenWord = value(.highlightsSpokenWord, base.highlightsSpokenWord)
         edgeColor = value(.edgeColor, base.edgeColor)
+        let speed = value(.animationSpeed, base.animationSpeed)
+        animationSpeed = speed > 0 && speed.isFinite ? speed : base.animationSpeed
+        tracking = min(Self.trackingRange.upperBound, max(Self.trackingRange.lowerBound, value(.tracking, base.tracking)))
+        edgeWidth = min(Self.edgeWidthRange.upperBound, max(Self.edgeWidthRange.lowerBound, value(.edgeWidth, base.edgeWidth)))
     }
 
     /// A gradient needs at least two colours; anything less is drawn solid.
@@ -169,8 +264,11 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
 
     /// True when the spoken word is drawn in the highlight colour. "Fill each word"
     /// already marks the spoken word by filling it, so it is never highlighted too.
+    /// "Box each word" draws its box in the highlight colour, so recolouring the word
+    /// the same colour would hide it; "One word at a time" shows only the spoken word.
     public var highlightsCurrentWord: Bool {
-        animation == .wordHighlight || (highlightsSpokenWord && animation != .wordFill)
+        animation == .wordHighlight
+            || (highlightsSpokenWord && animation != .wordFill && animation != .wordBox && animation != .oneWord)
     }
 
     /// Ready-made gradients, a click each. Text gradients are bright so they read on
@@ -189,6 +287,9 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
         GradientPreset(name: "Ocean", colours: ["#6EE7F9", "#8B8CFF"]),
         GradientPreset(name: "Lime", colours: ["#EEFF6A", "#3DDC97"]),
         GradientPreset(name: "Gold", colours: ["#FFF3B0", "#FFB627"]),
+        GradientPreset(name: "Rainbow", colours: ["#FF5E5E", "#FFB443", "#FFF05A", "#4BE37C", "#4FC3FF", "#B07CFF"]),
+        GradientPreset(name: "Candy", colours: ["#FF9AD5", "#9AD0FF"]),
+        GradientPreset(name: "Neon", colours: ["#00F5FF", "#FF00E5"]),
     ]
 
     /// The first is Subly's website headline in light mode, nearly opaque.
@@ -197,6 +298,9 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
         GradientPreset(name: "Night", colours: ["#0B1023E6", "#3A1C71E6"]),
         GradientPreset(name: "Ember", colours: ["#7A1F1FE6", "#C2410CE6"]),
         GradientPreset(name: "Forest", colours: ["#063B2EE6", "#0F766EE6"]),
+        GradientPreset(name: "Royal", colours: ["#1E3A8AE6", "#7C3AEDE6"]),
+        GradientPreset(name: "Breaking", colours: ["#DC2626F0", "#7F1D1DF0"]),
+        GradientPreset(name: "Candy", colours: ["#EC4899E6", "#8B5CF6E6"]),
     ]
 
     /// Where captions can sit. Reels, Shorts and TikTok cover roughly the bottom fifth
@@ -247,7 +351,80 @@ public struct CaptionStyle: Codable, Sendable, Hashable {
                                 textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#00000099",
                                 background: .shadow, position: 0.70, uppercase: false, animation: .wordFill,
                                 italic: true, textGradient: textGradients[0].colours)
+        case .punch:
+            return CaptionStyle(template: .punch, font: .impact, bold: false, size: 0.07,
+                                textColor: "#FFFFFF", highlightColor: "#FFE600", boxColor: "#000000CC",
+                                background: .outline, position: 0.70, uppercase: true, animation: .zoomIn,
+                                highlightsSpokenWord: true, animationSpeed: 1.8, edgeWidth: 1.4)
+        case .oneWord:
+            return CaptionStyle(template: .oneWord, font: .futura, bold: true, size: 0.09,
+                                textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#000000CC",
+                                background: .outline, position: 0.70, uppercase: true, animation: .oneWord,
+                                edgeWidth: 1.6)
+        case .neon:
+            return CaptionStyle(template: .neon, font: .avenirNext, bold: true, size: 0.06,
+                                textColor: "#FFE3F6", highlightColor: "#FFD60A", boxColor: "#000000CC",
+                                background: .glow, position: 0.70, uppercase: false, animation: .flicker,
+                                edgeColor: "#FF2BD6")
+        case .highlighter:
+            return CaptionStyle(template: .highlighter, font: .avenirNext, bold: true, size: 0.05,
+                                textColor: "#111111", highlightColor: "#FFD60A", boxColor: "#FFE45C",
+                                background: .highlighter, position: 0.70, uppercase: false, animation: .slideIn)
+        case .wordBox:
+            return CaptionStyle(template: .wordBox, font: .rounded, bold: true, size: 0.055,
+                                textColor: "#FFFFFF", highlightColor: "#8B5CF6", boxColor: "#000000CC",
+                                background: .outline, position: 0.70, uppercase: true, animation: .wordBox)
+        case .retro:
+            return CaptionStyle(template: .retro, font: .rockwell, bold: true, size: 0.06,
+                                textColor: "#FFF4D6", highlightColor: "#FFD60A", boxColor: "#000000CC",
+                                background: .offsetShadow, position: 0.70, uppercase: true, animation: .pop,
+                                edgeColor: "#E4572E")
+        case .drop:
+            return CaptionStyle(template: .drop, font: .rounded, bold: true, size: 0.06,
+                                textColor: "#FFE600", highlightColor: "#FFD60A", boxColor: "#000000CC",
+                                background: .outline, position: 0.70, uppercase: false, animation: .drop)
+        case .cinematic:
+            // Small and wide, low in the frame, fading in slowly like a film title.
+            return CaptionStyle(template: .cinematic, font: .futura, bold: false, size: 0.036,
+                                textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#00000099",
+                                background: .shadow, position: 0.78, uppercase: true, animation: .fade,
+                                animationSpeed: 0.5, tracking: 0.25)
+        case .handwritten:
+            return CaptionStyle(template: .handwritten, font: .markerFelt, bold: true, size: 0.062,
+                                textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#00000099",
+                                background: .shadow, position: 0.70, uppercase: false, animation: .tilt)
+        case .comic:
+            return CaptionStyle(template: .comic, font: .chalkboard, bold: true, size: 0.05,
+                                textColor: "#111111", highlightColor: "#FFD60A", boxColor: "#FFFFFFF2",
+                                background: .box, position: 0.70, uppercase: true, animation: .pop)
+        case .terminal:
+            return CaptionStyle(template: .terminal, font: .monospaced, bold: true, size: 0.042,
+                                textColor: "#39FF88", highlightColor: "#FFD60A", boxColor: "#0A0F0AE6",
+                                background: .box, position: 0.70, uppercase: false, animation: .typewriter)
+        case .headline:
+            return CaptionStyle(template: .headline, font: .futura, bold: true, size: 0.045,
+                                textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#DC2626F0",
+                                background: .box, position: 0.74, uppercase: true, animation: .slideIn,
+                                boxGradient: colours(boxGradients, "Breaking"))
+        case .glitch:
+            return CaptionStyle(template: .glitch, font: .condensed, bold: true, size: 0.062,
+                                textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#000000CC",
+                                background: .splitColour, position: 0.70, uppercase: true, animation: .shake)
+        case .candy:
+            return CaptionStyle(template: .candy, font: .rounded, bold: true, size: 0.052,
+                                textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#EC4899E6",
+                                background: .box, position: 0.70, uppercase: false, animation: .pop,
+                                boxGradient: colours(boxGradients, "Candy"), animationSpeed: 1.8)
+        case .rainbow:
+            return CaptionStyle(template: .rainbow, font: .rounded, bold: true, size: 0.06,
+                                textColor: "#FFFFFF", highlightColor: "#FFD60A", boxColor: "#000000CC",
+                                background: .outline, position: 0.70, uppercase: false, animation: .bounce,
+                                textGradient: colours(textGradients, "Rainbow"))
         }
+    }
+
+    private static func colours(_ presets: [GradientPreset], _ name: String) -> [String] {
+        (presets.first { $0.name == name } ?? presets[0]).colours
     }
 
     /// The caption text as it will be drawn.
@@ -298,25 +475,96 @@ public enum CaptionAnimationTiming {
         }
     }
 
-    /// Opacity, scale and vertical offset (as a fraction of the text height) for an
-    /// animation `elapsed` seconds into a caption lasting `duration`.
-    public static func transform(_ animation: CaptionStyle.Animation, elapsed: Double,
-                                 duration: Double) -> (opacity: Double, scale: Double, offset: Double) {
-        let fadeIn = min(1, max(0, elapsed / inDuration))
-        let fadeOut = min(1, max(0, (duration - elapsed) / outDuration))
+    /// Where a whole-caption animation has put the caption: how visible, how big, how far
+    /// it is shifted (in text heights, as SwiftUI counts: right and down are positive)
+    /// and how far it is turned (degrees, clockwise).
+    public struct Pose: Sendable, Equatable {
+        public var opacity: Double
+        public var scale: Double
+        public var offsetX: Double
+        public var offsetY: Double
+        public var rotation: Double
+
+        public init(opacity: Double = 1, scale: Double = 1, offsetX: Double = 0,
+                    offsetY: Double = 0, rotation: Double = 0) {
+            self.opacity = opacity; self.scale = scale
+            self.offsetX = offsetX; self.offsetY = offsetY; self.rotation = rotation
+        }
+
+        public static let identity = Pose()
+    }
+
+    /// Seconds an animation takes to come in at normal speed.
+    public static func entranceDuration(_ animation: CaptionStyle.Animation) -> Double {
         switch animation {
-        case .none, .wordHighlight, .typewriter, .wordFill:
-            return (1, 1, 0)
+        case .slideIn: return 0.28
+        case .zoomIn:  return 0.22
+        case .bounce:  return 0.5
+        case .drop:    return 0.45
+        case .tilt:    return 0.3
+        case .flicker: return 0.35
+        case .shake:   return 0.3
+        default:       return inDuration
+        }
+    }
+
+    /// The pose for an animation `elapsed` seconds into a caption lasting `duration`.
+    /// `speed` divides the entrance and exit times: 0.5 is twice as slow, 1.8 nearly twice
+    /// as fast. Per-word animations (and none) leave the caption as it is.
+    public static func transform(_ animation: CaptionStyle.Animation, elapsed: Double,
+                                 duration: Double, speed: Double = 1) -> Pose {
+        let speed = max(0.05, speed)
+        let inD = entranceDuration(animation) / speed
+        let outD = outDuration / speed
+        let fadeIn = min(1, max(0, elapsed / inD))
+        let fadeOut = min(1, max(0, (duration - elapsed) / outD))
+        let p = fadeIn
+        let eased = 1 - pow(1 - p, 3)
+        switch animation {
+        case .none, .wordHighlight, .typewriter, .wordFill, .wordBox, .oneWord:
+            return .identity
         case .fade:
-            return (min(fadeIn, fadeOut), 1, 0)
+            return Pose(opacity: min(fadeIn, fadeOut))
         case .pop:
             // Overshoot to 1.08, then settle: reads as a pop, not a zoom.
-            let p = fadeIn
             let scale = p < 0.7 ? 0.7 + (1.08 - 0.7) * (p / 0.7) : 1.08 - 0.08 * ((p - 0.7) / 0.3)
-            return (min(1, p * 2), scale, 0)
+            return Pose(opacity: min(1, p * 2), scale: scale)
         case .slideUp:
-            let eased = 1 - pow(1 - fadeIn, 3)
-            return (min(fadeIn * 1.5, fadeOut), 1, 0.6 * (1 - eased))
+            return Pose(opacity: min(fadeIn * 1.5, fadeOut), offsetY: 0.6 * (1 - eased))
+        case .slideIn:
+            return Pose(opacity: min(fadeIn * 1.5, fadeOut), offsetX: -1.2 * (1 - eased))
+        case .zoomIn:
+            return Pose(opacity: min(fadeIn * 2, fadeOut), scale: 1.35 - 0.35 * eased)
+        case .bounce:
+            return Pose(opacity: min(1, p * 3, fadeOut), offsetY: 0.8 * (1 - p) * cos(3 * .pi * p))
+        case .drop:
+            return Pose(opacity: min(1, p * 3, fadeOut), offsetY: -1.2 * (1 - easeOutBounce(p)))
+        case .tilt:
+            return Pose(opacity: min(fadeIn * 1.5, fadeOut), scale: 0.9 + 0.1 * eased, rotation: -12 * (1 - eased))
+        case .flicker:
+            // Sputters on in six jumps; a smooth fade would not look like a bad tube.
+            let steps = [0, 0.9, 0.2, 1, 0.5, 1]
+            return Pose(opacity: p < 1 ? steps[min(5, Int(p * 6))] : fadeOut)
+        case .shake:
+            return Pose(opacity: min(1, p * 2, fadeOut), offsetX: 0.12 * (1 - p) * sin(12 * .pi * p))
         }
+    }
+
+    /// 0 to 1, landing on 1 after a few bounces.
+    private static func easeOutBounce(_ x: Double) -> Double {
+        let n = 7.5625, d = 2.75
+        if x < 1 / d { return n * x * x }
+        if x < 2 / d { let t = x - 1.5 / d; return n * t * t + 0.75 }
+        if x < 2.5 / d { let t = x - 2.25 / d; return n * t * t + 0.9375 }
+        let t = x - 2.625 / d
+        return n * t * t + 0.984375
+    }
+
+    /// The word being said `elapsed` seconds into a caption, as an index: the last word
+    /// that has started, or the first before any has, so "one word at a time" never
+    /// shows an empty caption. Nil when there are no words.
+    public static func shownWord(_ words: [Word], elapsed: Double) -> Int? {
+        guard !words.isEmpty else { return nil }
+        return words.lastIndex(where: { $0.start <= elapsed }) ?? 0
     }
 }
